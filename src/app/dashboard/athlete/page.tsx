@@ -1,13 +1,11 @@
 import DashboardNavbar from "@/components/dashboard-navbar";
-import CreateCompetitionModal from "@/components/create-competition-modal";
-import EditCompetitionModal from "@/components/edit-competition-modal";
 import CompetitionCard from "@/components/competition-card";
 import { InfoIcon, Calendar } from "lucide-react";
 import { redirect } from "next/navigation";
-import { createClient } from "../../../supabase/server";
+import { createClient } from "../../../../supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 
-export default async function Dashboard() {
+export default async function AthleteDashboard() {
   const supabase = await createClient();
 
   const {
@@ -18,34 +16,29 @@ export default async function Dashboard() {
     return redirect("/");
   }
 
-  // Check user role and redirect if participant
+  // Verify user is a participant
   const { data: userProfile } = await supabase
     .from("users")
     .select("role")
     .eq("id", user.id)
     .single();
 
-  if (userProfile?.role === "participant") {
-    return redirect("/dashboard/athlete");
+  if (userProfile?.role !== "participant") {
+    return redirect("/dashboard");
   }
 
-  if (userProfile?.role !== "event_manager") {
-    return redirect("/dashboard/athlete");
-  }
-
-  // Fetch all competitions created by the current user (regardless of visibility)
+  // Fetch only visible competitions for participants
   const { data: competitions, error } = await supabase
     .from("competitions")
     .select("*")
-    .eq("created_by", user.id)
+    .eq("is_visible", true)
     .order("created_at", { ascending: false });
 
-  console.log("Event manager dashboard - User ID:", user.id);
   console.log(
-    "Event manager dashboard - Competitions found:",
+    "Athlete dashboard - Competitions found:",
     competitions?.length || 0,
   );
-  console.log("Event manager dashboard - Query error:", error);
+  console.log("Athlete dashboard - Query error:", error);
 
   return (
     <>
@@ -55,12 +48,11 @@ export default async function Dashboard() {
           {/* Header Section */}
           <header className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold">My Competitions</h1>
-              <CreateCompetitionModal />
+              <h1 className="text-3xl font-bold">Available Competitions</h1>
             </div>
             <div className="bg-secondary/50 text-sm p-3 px-4 rounded-lg text-muted-foreground flex gap-2 items-center">
               <InfoIcon size="14" />
-              <span>Manage your sport events and competitions</span>
+              <span>Browse and view available sport competitions</span>
             </div>
           </header>
 
@@ -77,27 +69,20 @@ export default async function Dashboard() {
                 <CardContent>
                   <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                   <h3 className="text-lg font-semibold mb-2">
-                    No competitions yet
+                    No competitions available
                   </h3>
-                  <p className="text-muted-foreground mb-4">
-                    Create your first competition to get started with event
-                    management.
+                  <p className="text-muted-foreground">
+                    There are currently no competitions available to view.
                   </p>
-                  <CreateCompetitionModal />
                 </CardContent>
               </Card>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {competitions?.map((competition) => (
-                  <div key={competition.id} className="space-y-4">
-                    <CompetitionCard
-                      competition={competition}
-                      showManageButton={true}
-                    />
-                    <div className="px-6 pb-4">
-                      <EditCompetitionModal competition={competition} />
-                    </div>
-                  </div>
+                  <CompetitionCard
+                    key={competition.id}
+                    competition={competition}
+                  />
                 ))}
               </div>
             )}

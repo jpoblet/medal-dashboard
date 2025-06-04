@@ -1,9 +1,14 @@
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
+  // Create an unmodified response
+  let response = NextResponse.next({
+    request: {
+      headers: req.headers,
+    },
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,26 +19,53 @@ export async function middleware(req: NextRequest) {
           return req.cookies.getAll().map(({ name, value }) => ({
             name,
             value,
-          }))
+          }));
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            req.cookies.set(name, value)
-            res.cookies.set(name, value, options)
-          })
+            req.cookies.set(name, value);
+            response = NextResponse.next({
+              request: {
+                headers: req.headers,
+              },
+            });
+            response.cookies.set(name, value, options);
+          });
         },
       },
-    }
-  )
+    },
+  );
 
-  // Refresh session if expired - required for Server Components
-  const { data: { session }, error } = await supabase.auth.getSession()
+  // This will refresh session if expired - required for Server Components
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (error) {
-    console.error('Auth session error:', error)
+  // Protected routes - redirect to home if no user or if user exists but has error
+  if (req.nextUrl.pathname.startsWith("/dashboard") && (!user || error)) {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
-  return res
+  // Redirect authenticated users to appropriate dashboard from home page
+  if (req.nextUrl.pathname === "/" && user && !error) {
+    // Get user role to determine redirect
+    const { data: userProfile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (userProfile?.role === "participant") {
+      return NextResponse.redirect(new URL("/dashboard/athlete", req.url));
+    } else if (userProfile?.role === "event_manager") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    } else {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+  }
+
+  return response;
 }
 
 // Ensure the middleware is only called for relevant paths
@@ -46,6 +78,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public (public files)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
+    "/((?!_next/static|_next/image|favicon.ico|public|api).*)",
   ],
-}
+};

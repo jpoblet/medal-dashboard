@@ -1,20 +1,21 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { createClient } from '../../supabase/client'
+import Link from "next/link";
+import { createClient } from "../../supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from './ui/dropdown-menu'
-import { Button } from './ui/button'
-import { UserCircle, Home } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+} from "./ui/dropdown-menu";
+import { Button } from "./ui/button";
+import { UserCircle, User } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function DashboardNavbar() {
-  const supabase = createClient()
-  const router = useRouter()
+  const supabase = createClient();
+  const router = useRouter();
 
   return (
     <nav className="w-full border-b border-gray-200 bg-white py-4">
@@ -32,10 +33,22 @@ export default function DashboardNavbar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={async () => {
-                await supabase.auth.signOut()
-                router.refresh()
-              }}>
+              <DropdownMenuItem asChild>
+                <Link
+                  href="/dashboard/profile"
+                  className="flex items-center gap-2"
+                >
+                  <User className="h-4 w-4" />
+                  Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  router.refresh();
+                }}
+              >
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -43,5 +56,5 @@ export default function DashboardNavbar() {
         </div>
       </div>
     </nav>
-  )
+  );
 }
