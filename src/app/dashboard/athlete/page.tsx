@@ -70,6 +70,7 @@ export default async function Page() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {competitions?.map((competition) => (
                   <CompetitionCard
+                    currentUserId={user.id}
                     showCreator={true}
                     key={competition.id}
                     competition={{

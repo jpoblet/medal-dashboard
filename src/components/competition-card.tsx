@@ -19,22 +19,27 @@ interface CompetitionCardProps {
   competition: Competition;
   showManageButton?: boolean;
   showCreator?: boolean;
+  currentUserId?: string; // new prop to check if user is creator
 }
 
 export default function CompetitionCard({
   competition,
   showManageButton = false,
   showCreator = true,
+  currentUserId,
 }: CompetitionCardProps) {
   const {
     name,
     description,
     event_date,
     venue,
-    registration_open,
     is_visible,
+    registration_open,
+    created_by,
     creator,
   } = competition;
+
+  const isCreator = currentUserId && currentUserId === created_by;
 
   return (
     <Card className="hover:shadow-md transition-shadow bg-white">
@@ -46,17 +51,11 @@ export default function CompetitionCard({
               <CardDescription className="mt-1">{description}</CardDescription>
             )}
           </div>
-          <Badge
-            variant={
-              showManageButton
-                ? is_visible
-                  ? "default"
-                  : "secondary"
-                : "default"
-            }
-          >
-            {showManageButton ? (is_visible ? "Visible" : "Hidden") : "Open"}
-          </Badge>
+          {isCreator && (
+            <Badge variant={is_visible ? "default" : "secondary"}>
+              {is_visible ? "Visible" : "Hidden"}
+            </Badge>
+          )}
         </div>
       </CardHeader>
 
@@ -65,7 +64,7 @@ export default function CompetitionCard({
           {event_date && (
             <InfoRow
               icon={Calendar}
-              text={new Date(event_date).toLocaleDateString()}
+              text={new Date(event_date).toLocaleDateString("en-GB")}
             />
           )}
           {venue && <InfoRow icon={MapPin} text={venue} />}

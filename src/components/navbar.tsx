@@ -29,8 +29,12 @@ export default function Navbar({ onSignInClick, onSignUpClick }: NavbarProps) {
 
   return (
     <div className="flex flex-col items-center gap-8">
-      <Link href="/" prefetch className="text-3xl font-bold text-gray-900">
-        SportAdmin
+      <Link
+        href="/"
+        prefetch
+        className="text-3xl font-bold italic font-serif text-gray-900"
+      >
+        m
       </Link>
       <div className="flex gap-4 items-center">
         {user ? (

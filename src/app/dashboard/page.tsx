@@ -78,6 +78,7 @@ export default async function Dashboard() {
                 {competitions?.map((competition) => (
                   <div key={competition.id} className="space-y-4">
                     <CompetitionCard
+                      currentUserId={user.id}
                       competition={competition}
                       showManageButton={true}
                       showCreator={false}

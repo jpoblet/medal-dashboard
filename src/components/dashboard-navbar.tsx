@@ -10,26 +10,64 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
-import { UserCircle, User } from "lucide-react";
+import { Badge } from "./ui/badge";
+import { UserCircle, User, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function DashboardNavbar() {
   const supabase = createClient();
   const router = useRouter();
+  const [userFullName, setUserFullName] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data: userProfile } = await supabase
+          .from("users")
+          .select("full_name, name, role")
+          .eq("id", user.id)
+          .single();
+
+        setUserFullName(userProfile?.full_name || userProfile?.name || null);
+        setUserRole(userProfile?.role || null);
+      }
+    };
+
+    fetchUserProfile();
+  }, [supabase]);
 
   return (
     <nav className="w-full border-b border-gray-200 bg-white py-4">
       <div className="container mx-auto px-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <Link href="/" prefetch className="text-xl font-bold">
-            Logo
+          <Link
+            href="/"
+            prefetch
+            className="text-4xl font-serif italic font-bold"
+          >
+            m
           </Link>
+          {userRole && (
+            <Badge variant="secondary" className="text-xs">
+              {userRole === "event_manager" ? "event manager" : "athlete"}
+            </Badge>
+          )}
         </div>
         <div className="flex gap-4 items-center">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" className="flex items-center gap-2 px-3">
                 <UserCircle className="h-6 w-6" />
+                {userFullName && (
+                  <span className="text-sm font-medium">{userFullName}</span>
+                )}
+                <ChevronDown className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
