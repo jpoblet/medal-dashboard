@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "../../supabase/server";
 
+// ---------- AUTH ----------
+
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
@@ -35,12 +37,7 @@ export const signUpAction = async (formData: FormData) => {
     },
   });
 
-  console.log("After signUp", error);
-
   if (error) {
-    console.error(error.code + " " + error.message);
-
-    // Handle user already exists error more gracefully
     if (error.code === "user_already_exists") {
       return encodedRedirect(
         "error",
@@ -48,11 +45,8 @@ export const signUpAction = async (formData: FormData) => {
         "An account with this email already exists. Please sign in instead.",
       );
     }
-
     return encodedRedirect("error", "/", error.message);
   }
-
-  // User profile is automatically created by the database trigger
 
   return encodedRedirect(
     "success",
@@ -75,18 +69,14 @@ export const signInAction = async (formData: FormData) => {
     return encodedRedirect("error", "/", error.message);
   }
 
-  // Get user role from database
   const { data: userProfile } = await supabase
     .from("users")
     .select("role")
     .eq("id", data.user.id)
     .single();
 
-  // Redirect based on role
   if (userProfile?.role === "participant") {
     return redirect("/dashboard/athlete");
-  } else if (userProfile?.role === "event_manager") {
-    return redirect("/dashboard");
   } else {
     return redirect("/dashboard");
   }
@@ -107,7 +97,6 @@ export const forgotPasswordAction = async (formData: FormData) => {
   });
 
   if (error) {
-    console.error(error.message);
     return encodedRedirect("error", "/", "Could not reset password");
   }
 
@@ -124,12 +113,11 @@ export const forgotPasswordAction = async (formData: FormData) => {
 
 export const resetPasswordAction = async (formData: FormData) => {
   const supabase = await createClient();
-
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
 
   if (!password || !confirmPassword) {
-    encodedRedirect(
+    return encodedRedirect(
       "error",
       "/protected/reset-password",
       "Password and confirm password are required",
@@ -137,26 +125,28 @@ export const resetPasswordAction = async (formData: FormData) => {
   }
 
   if (password !== confirmPassword) {
-    encodedRedirect(
+    return encodedRedirect(
       "error",
       "/dashboard/reset-password",
       "Passwords do not match",
     );
   }
 
-  const { error } = await supabase.auth.updateUser({
-    password: password,
-  });
+  const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    encodedRedirect(
+    return encodedRedirect(
       "error",
       "/dashboard/reset-password",
       "Password update failed",
     );
   }
 
-  encodedRedirect("success", "/protected/reset-password", "Password updated");
+  return encodedRedirect(
+    "success",
+    "/protected/reset-password",
+    "Password updated",
+  );
 };
 
 export const signOutAction = async () => {
@@ -165,6 +155,8 @@ export const signOutAction = async () => {
   return redirect("/");
 };
 
+// ---------- COMPETITIONS ----------
+
 export const createCompetitionAction = async (formData: FormData) => {
   const name = formData.get("name")?.toString();
   const eventDate = formData.get("event_date")?.toString();
@@ -172,7 +164,6 @@ export const createCompetitionAction = async (formData: FormData) => {
   const location = formData.get("location")?.toString();
 
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -194,7 +185,7 @@ export const createCompetitionAction = async (formData: FormData) => {
     .insert({
       name,
       event_date: eventDate,
-      description: `${sport} competition`, // Add sport as description since there's no sport column
+      description: `${sport} competition`,
       venue: location,
       created_by: user.id,
       is_visible: true,
@@ -203,7 +194,6 @@ export const createCompetitionAction = async (formData: FormData) => {
     .select();
 
   if (error) {
-    console.error("Error creating competition:", error);
     return encodedRedirect(
       "error",
       "/dashboard",
@@ -211,10 +201,6 @@ export const createCompetitionAction = async (formData: FormData) => {
     );
   }
 
-  console.log("Competition created successfully:", data);
-  console.log("Created by user ID:", user.id);
-
-  // Revalidate the dashboard pages to show the new competition
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/athlete");
 
@@ -235,20 +221,7 @@ export const updateCompetitionAction = async (formData: FormData) => {
   const registrationOpen =
     formData.get("registration_open")?.toString() === "true";
 
-  console.log("Form data received:", {
-    id,
-    name,
-    description,
-    eventDate,
-    venue,
-    isVisible,
-    registrationOpen,
-    rawIsVisible: formData.get("is_visible"),
-    rawRegistrationOpen: formData.get("registration_open"),
-  });
-
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -261,25 +234,6 @@ export const updateCompetitionAction = async (formData: FormData) => {
     );
   }
 
-  // Check if user exists in users table
-  const { data: userProfile, error: userError } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  console.log("User profile:", userProfile, "User error:", userError);
-
-  if (userError) {
-    console.error("Error fetching user profile:", userError);
-    return encodedRedirect(
-      "error",
-      "/dashboard",
-      "Error verifying user permissions",
-    );
-  }
-
-  // Check if competition exists and user owns it
   const { data: existingCompetition, error: fetchError } = await supabase
     .from("competitions")
     .select("*")
@@ -287,27 +241,11 @@ export const updateCompetitionAction = async (formData: FormData) => {
     .eq("created_by", user.id)
     .single();
 
-  console.log(
-    "Existing competition:",
-    existingCompetition,
-    "Fetch error:",
-    fetchError,
-  );
-
   if (fetchError || !existingCompetition) {
-    console.error("Competition not found or not owned by user:", fetchError);
     return encodedRedirect(
       "error",
       "/dashboard",
       "Competition not found or you don't have permission to edit it",
-    );
-  }
-
-  if (!id || !name || !eventDate || !venue) {
-    return encodedRedirect(
-      "error",
-      "/dashboard",
-      "Required fields are missing",
     );
   }
 
@@ -321,8 +259,6 @@ export const updateCompetitionAction = async (formData: FormData) => {
     updated_at: new Date().toISOString(),
   };
 
-  console.log("Update data:", updateData);
-
   const { data, error } = await supabase
     .from("competitions")
     .update(updateData)
@@ -331,7 +267,6 @@ export const updateCompetitionAction = async (formData: FormData) => {
     .select();
 
   if (error) {
-    console.error("Error updating competition:", error);
     return encodedRedirect(
       "error",
       "/dashboard",
@@ -340,17 +275,13 @@ export const updateCompetitionAction = async (formData: FormData) => {
   }
 
   if (!data || data.length === 0) {
-    console.error("No competition was updated - check permissions");
     return encodedRedirect(
       "error",
       "/dashboard",
-      "No competition was updated - you may not have permission to edit this competition",
+      "No competition was updated - you may not have permission",
     );
   }
 
-  console.log("Updated competition data:", data);
-
-  // Revalidate the dashboard pages to show the updated competition
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/athlete");
 
@@ -365,7 +296,6 @@ export const deleteCompetitionAction = async (formData: FormData) => {
   const id = formData.get("id")?.toString();
 
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -387,10 +317,9 @@ export const deleteCompetitionAction = async (formData: FormData) => {
     .delete()
     .eq("id", id)
     .eq("created_by", user.id)
-    .select(); // Ensure user can only delete their own competitions
+    .select();
 
   if (error) {
-    console.error("Error deleting competition:", error);
     return encodedRedirect(
       "error",
       "/dashboard",
@@ -399,17 +328,13 @@ export const deleteCompetitionAction = async (formData: FormData) => {
   }
 
   if (!data || data.length === 0) {
-    console.error("No competition was deleted - check permissions");
     return encodedRedirect(
       "error",
       "/dashboard",
-      "No competition was deleted - you may not have permission to delete this competition",
+      "No competition was deleted - you may not have permission",
     );
   }
 
-  console.log("Deleted competition:", data);
-
-  // Revalidate the dashboard pages to reflect the deletion
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/athlete");
 
@@ -417,5 +342,84 @@ export const deleteCompetitionAction = async (formData: FormData) => {
     "success",
     "/dashboard",
     "Competition deleted successfully!",
+  );
+};
+
+// ---------- PARTICIPATION ----------
+
+export const joinCompetitionAction = async (formData: FormData) => {
+  const competitionId = formData.get("competition_id")?.toString();
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return encodedRedirect(
+      "error",
+      "/dashboard/athlete",
+      "You must be logged in to join a competition",
+    );
+  }
+
+  if (!competitionId) {
+    return encodedRedirect(
+      "error",
+      "/dashboard/athlete",
+      "Competition ID is required",
+    );
+  }
+
+  const userId = user.id;
+
+  // Check if user is already registered
+  const { data: existingParticipant } = await supabase
+    .from("competition_participants")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("competition_id", competitionId)
+    .single();
+
+  if (existingParticipant) {
+    return encodedRedirect(
+      "error",
+      "/dashboard/athlete",
+      "You are already registered for this competition",
+    );
+  }
+
+  const { data, error: insertError } = await supabase
+    .from("competition_participants")
+    .insert({
+      user_id: userId,
+      competition_id: competitionId,
+    })
+    .select();
+
+  if (insertError) {
+    console.error("Database insertion error:", insertError);
+    return encodedRedirect(
+      "error",
+      "/dashboard/athlete",
+      "Failed to join competition: " + insertError.message,
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return encodedRedirect(
+      "error",
+      "/dashboard/athlete",
+      "Failed to join competition - no data returned",
+    );
+  }
+
+  revalidatePath("/dashboard/athlete");
+  revalidatePath("/dashboard");
+
+  return encodedRedirect(
+    "success",
+    "/dashboard/athlete",
+    "You successfully joined the competition!",
   );
 };

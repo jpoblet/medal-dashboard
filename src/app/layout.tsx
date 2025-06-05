@@ -4,6 +4,7 @@ import "./globals.css";
 import Script from "next/script";
 import { TempoInit } from "@/components/tempo-init";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "sonner";
 
 const onest = Onest({ subsets: ["latin"] });
 const arvo = Arvo({ subsets: ["latin"], weight: ["400", "700"] });
@@ -30,6 +31,7 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
+        <Toaster />
         <TempoInit />
       </body>
     </html>

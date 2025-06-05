@@ -11,7 +11,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { UserCircle, User, ChevronDown } from "lucide-react";
+import { User, ChevronDown, Contact, Flag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -63,7 +63,11 @@ export default function DashboardNavbar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 px-3">
-                <UserCircle className="h-6 w-6" />
+                {userRole === "event_manager" ? (
+                  <Flag className="h-6 w-6" />
+                ) : (
+                  <Contact className="h-6 w-6" />
+                )}
                 {userFullName && (
                   <span className="text-sm font-medium">{userFullName}</span>
                 )}

@@ -32,6 +32,15 @@ export default async function Page() {
     .eq("is_visible", true)
     .order("created_at", { ascending: false });
 
+  // Fetch user's joined competitions
+  const { data: userParticipations } = await supabase
+    .from("competition_participants")
+    .select("competition_id")
+    .eq("user_id", user.id);
+
+  const userJoinedCompetitions =
+    userParticipations?.map((p) => p.competition_id) || [];
+
   return (
     <>
       <DashboardNavbar />
@@ -72,6 +81,7 @@ export default async function Page() {
                   <CompetitionCard
                     currentUserId={user.id}
                     showCreator={true}
+                    userJoinedCompetitions={userJoinedCompetitions}
                     key={competition.id}
                     competition={{
                       ...competition,

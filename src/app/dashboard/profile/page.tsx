@@ -1,5 +1,5 @@
 import DashboardNavbar from "@/components/dashboard-navbar";
-import { UserCircle } from "lucide-react";
+
 import { redirect } from "next/navigation";
 import { createClient } from "../../../../supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,31 +32,14 @@ export default async function ProfilePage() {
 
             <Card className="bg-white">
               <CardHeader>
-                <div className="flex items-center gap-4">
-                  <UserCircle size={64} className="text-primary" />
-                  <div>
-                    <CardTitle className="text-2xl mb-2">
-                      User Profile
-                    </CardTitle>
-                    <p className="text-muted-foreground">
-                      Manage your account information
-                    </p>
-                  </div>
-                </div>
+                <CardTitle className="text-2xl mb-2">
+                  {userProfile?.full_name ||
+                    userProfile?.name ||
+                    "User Profile"}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Full Name
-                    </label>
-                    <div className="text-lg">
-                      {userProfile?.full_name ||
-                        userProfile?.name ||
-                        "Not provided"}
-                    </div>
-                  </div>
-
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-muted-foreground">
                       Email Address
