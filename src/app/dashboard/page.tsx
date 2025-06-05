@@ -14,38 +14,25 @@ export default async function Dashboard() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    return redirect("/");
-  }
+  if (!user) return redirect("/");
 
-  // Check user role and redirect if participant
+  // Get user role
   const { data: userProfile } = await supabase
     .from("users")
     .select("role")
     .eq("id", user.id)
     .single();
 
-  if (userProfile?.role === "participant") {
-    return redirect("/dashboard/athlete");
-  }
-
   if (userProfile?.role !== "event_manager") {
     return redirect("/dashboard/athlete");
   }
 
-  // Fetch all competitions created by the current user (regardless of visibility)
+  // Fetch competitions with creator info
   const { data: competitions, error } = await supabase
     .from("competitions")
-    .select("*")
+    .select("*, creator:users(full_name)")
     .eq("created_by", user.id)
     .order("created_at", { ascending: false });
-
-  console.log("Event manager dashboard - User ID:", user.id);
-  console.log(
-    "Event manager dashboard - Competitions found:",
-    competitions?.length || 0,
-  );
-  console.log("Event manager dashboard - Query error:", error);
 
   return (
     <>
@@ -93,6 +80,7 @@ export default async function Dashboard() {
                     <CompetitionCard
                       competition={competition}
                       showManageButton={true}
+                      showCreator={false}
                     />
                     <div className="px-6 pb-4">
                       <EditCompetitionModal competition={competition} />

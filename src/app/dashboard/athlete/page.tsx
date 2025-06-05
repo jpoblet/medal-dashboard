@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "../../../../supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 
-export default async function AthleteDashboard() {
+export default async function Page() {
   const supabase = await createClient();
 
   const {
@@ -16,7 +16,6 @@ export default async function AthleteDashboard() {
     return redirect("/");
   }
 
-  // Verify user is a participant
   const { data: userProfile } = await supabase
     .from("users")
     .select("role")
@@ -27,25 +26,17 @@ export default async function AthleteDashboard() {
     return redirect("/dashboard");
   }
 
-  // Fetch only visible competitions for participants
   const { data: competitions, error } = await supabase
-    .from("competitions")
+    .from("competitions_with_creators")
     .select("*")
     .eq("is_visible", true)
     .order("created_at", { ascending: false });
-
-  console.log(
-    "Athlete dashboard - Competitions found:",
-    competitions?.length || 0,
-  );
-  console.log("Athlete dashboard - Query error:", error);
 
   return (
     <>
       <DashboardNavbar />
       <main className="w-full">
         <div className="container mx-auto px-4 py-8 flex flex-col gap-8">
-          {/* Header Section */}
           <header className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-bold">Available Competitions</h1>
@@ -56,7 +47,6 @@ export default async function AthleteDashboard() {
             </div>
           </header>
 
-          {/* Competitions Section */}
           <section className="space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -80,8 +70,12 @@ export default async function AthleteDashboard() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {competitions?.map((competition) => (
                   <CompetitionCard
+                    showCreator={true}
                     key={competition.id}
-                    competition={competition}
+                    competition={{
+                      ...competition,
+                      creator: { full_name: competition.creator_full_name },
+                    }}
                   />
                 ))}
               </div>

@@ -9,70 +9,90 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tables } from "@/types/supabase";
 
-type Competition = Tables<"competitions">;
+type Competition = Tables<"competitions"> & {
+  creator?: {
+    full_name?: string | null;
+  };
+};
 
 interface CompetitionCardProps {
   competition: Competition;
   showManageButton?: boolean;
+  showCreator?: boolean;
 }
 
 export default function CompetitionCard({
   competition,
   showManageButton = false,
+  showCreator = true,
 }: CompetitionCardProps) {
+  const {
+    name,
+    description,
+    event_date,
+    venue,
+    registration_open,
+    is_visible,
+    creator,
+  } = competition;
+
   return (
     <Card className="hover:shadow-md transition-shadow bg-white">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-lg">{competition.name}</CardTitle>
-            {competition.description && (
-              <CardDescription className="mt-1">
-                {competition.description}
-              </CardDescription>
+            <CardTitle className="text-lg">{name}</CardTitle>
+            {description && (
+              <CardDescription className="mt-1">{description}</CardDescription>
             )}
           </div>
-          <div className="flex gap-1">
-            {showManageButton ? (
-              <Badge variant={competition.is_visible ? "default" : "secondary"}>
-                {competition.is_visible ? "Visible" : "Hidden"}
-              </Badge>
-            ) : (
-              <Badge variant="default">Open</Badge>
-            )}
-          </div>
+          <Badge
+            variant={
+              showManageButton
+                ? is_visible
+                  ? "default"
+                  : "secondary"
+                : "default"
+            }
+          >
+            {showManageButton ? (is_visible ? "Visible" : "Hidden") : "Open"}
+          </Badge>
         </div>
       </CardHeader>
+
       <CardContent>
         <div className="space-y-2 text-sm text-muted-foreground">
-          {competition.event_date && (
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>
-                {new Date(competition.event_date).toLocaleDateString()}
-              </span>
-            </div>
+          {event_date && (
+            <InfoRow
+              icon={Calendar}
+              text={new Date(event_date).toLocaleDateString()}
+            />
           )}
-          {competition.venue && (
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              <span>{competition.venue}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            <span>
-              Registration {competition.registration_open ? "Open" : "Closed"}
-            </span>
-          </div>
-          {competition.created_by && (
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4" />
-              <span>Created by: {competition.created_by}</span>
-            </div>
+          {venue && <InfoRow icon={MapPin} text={venue} />}
+          <InfoRow
+            icon={Users}
+            text={`Registration ${registration_open ? "Open" : "Closed"}`}
+          />
+          {showCreator && creator?.full_name && (
+            <InfoRow icon={User} text={`Created by: ${creator.full_name}`} />
           )}
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function InfoRow({
+  icon: Icon,
+  text,
+}: {
+  icon: React.ElementType;
+  text: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <Icon className="w-4 h-4" />
+      <span>{text}</span>
+    </div>
   );
 }
