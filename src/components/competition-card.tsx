@@ -78,7 +78,10 @@ export default function CompetitionCard({
       try {
         const formData = new FormData();
         formData.append("competition_id", id);
-        const result = await joinCompetitionAction(formData);
+        const result = (await joinCompetitionAction(formData)) as {
+          error?: string;
+        };
+
         if (result?.error) {
           toast.error(result.error);
         } else {
