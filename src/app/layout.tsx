@@ -6,12 +6,12 @@ import { TempoInit } from "@/components/tempo-init";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
 
-export const onest = Onest({
+const onest = Onest({
   subsets: ["latin"],
   variable: "--font-sans", // For Tailwind
 });
 
-export const arvo = Arvo({
+const arvo = Arvo({
   subsets: ["latin"],
   weight: ["400", "700"],
   style: ["normal", "italic"],
@@ -19,8 +19,8 @@ export const arvo = Arvo({
 });
 
 export const metadata: Metadata = {
-  title: "Tempo - Modern SaaS Starter",
-  description: "A modern full-stack starter template powered by Next.js",
+  title: "Medal ",
+  description: "Sport Competition Management Plaform",
 };
 
 export default function RootLayout({
