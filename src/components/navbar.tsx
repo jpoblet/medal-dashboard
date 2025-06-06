@@ -6,6 +6,7 @@ import { User, UserCircle } from "lucide-react";
 import UserProfile from "./user-profile";
 import { createClient } from "../../supabase/client";
 import { useEffect, useState } from "react";
+import type { User as SupabaseUser } from "@supabase/supabase-js"; // ✅ import type
 
 interface NavbarProps {
   onSignInClick?: (role?: string) => void;
@@ -13,7 +14,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onSignInClick, onSignUpClick }: NavbarProps) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null); // ✅ typed state
 
   useEffect(() => {
     const getUser = async () => {
