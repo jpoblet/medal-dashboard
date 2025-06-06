@@ -19,8 +19,8 @@ const config = {
     },
     extend: {
       fontFamily: {
-        sans: ["Onest", "sans-serif"],
-        serif: ["Arvo", "serif"],
+        sans: ["var(--font-sans)", "sans-serif"],
+        serif: ["var(--font-serif)", "serif"],
       },
       colors: {
         border: "hsl(var(--border))",

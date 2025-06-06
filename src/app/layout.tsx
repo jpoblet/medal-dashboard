@@ -6,11 +6,16 @@ import { TempoInit } from "@/components/tempo-init";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
 
-const onest = Onest({ subsets: ["latin"] });
-const arvo = Arvo({
+export const onest = Onest({
+  subsets: ["latin"],
+  variable: "--font-sans", // For Tailwind
+});
+
+export const arvo = Arvo({
   subsets: ["latin"],
   weight: ["400", "700"],
   style: ["normal", "italic"],
+  variable: "--font-serif", // For Tailwind
 });
 
 export const metadata: Metadata = {
@@ -24,12 +29,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${onest.variable} ${arvo.variable}`}
+      suppressHydrationWarning
+    >
       <Script src="https://api.tempolabs.ai/proxy-asset?url=https://storage.googleapis.com/tempo-public-assets/error-handling.js" />
-      <body className={onest.className}>
-        <span className={arvo.className} style={{ display: "none" }}>
-          .
-        </span>
+      <body>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
