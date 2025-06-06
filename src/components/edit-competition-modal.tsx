@@ -58,7 +58,7 @@ export default function EditCompetitionModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full">
+        <Button variant="outline" className="w-full">
           <Edit className="w-4 h-4 mr-2" />
           Manage Competition
         </Button>

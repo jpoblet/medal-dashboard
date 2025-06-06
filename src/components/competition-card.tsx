@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition, useEffect, useState } from "react";
-import { Calendar, MapPin, Users, User, UserCheck } from "lucide-react";
+import { Calendar, MapPin, Users, User, UserCheck, Eye } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -11,6 +11,9 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import CompetitionExpandedModal from "@/components/competition-expanded-modal";
+import EditCompetitionModal from "@/components/edit-competition-modal";
+import Link from "next/link";
 
 import { toast } from "sonner";
 import { Tables } from "@/types/supabase";
@@ -158,7 +161,7 @@ export default function CompetitionCard({
           </div>
           {isCreator && (
             <Badge variant={is_visible ? "default" : "secondary"}>
-              {is_visible ? "Visible" : "Hidden"}
+              {is_visible ? "Public" : "Not public"}
             </Badge>
           )}
         </div>
@@ -208,40 +211,22 @@ export default function CompetitionCard({
               <UserCheck className="w-4 h-4" />
               Participants ({participants.length})
             </div>
-            {loadingParticipants ? (
-              <div className="text-sm text-muted-foreground text-center py-2">
-                Loading participants...
-              </div>
-            ) : participants.length === 0 ? (
-              <div className="text-sm text-muted-foreground text-center py-2">
-                No participants yet
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {participants.map((participant) => (
-                  <div
-                    key={participant.id}
-                    className="flex items-center justify-between p-2 bg-muted/50 rounded-md text-sm"
-                  >
-                    <div>
-                      <div className="font-medium">
-                        {participant.full_name || "Anonymous"}
-                      </div>
-                      {participant.email && (
-                        <div className="text-xs text-muted-foreground">
-                          {participant.email}
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(participant.joined_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
+
+        {/* Action Buttons */}
+        <div className="pt-4 border-t space-y-2">
+          {isManager && <EditCompetitionModal competition={competition} />}
+          <Link href={`/competition/${id}`} className="block">
+            <Button
+              variant="outline"
+              className="w-full flex items-center gap-2"
+            >
+              <Eye className="w-4 h-4" />
+              View Details
+            </Button>
+          </Link>
+        </div>
       </CardContent>
     </Card>
   );

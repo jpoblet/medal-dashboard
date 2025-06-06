@@ -160,7 +160,6 @@ export const signOutAction = async () => {
 export const createCompetitionAction = async (formData: FormData) => {
   const name = formData.get("name")?.toString();
   const eventDate = formData.get("event_date")?.toString();
-  const sport = formData.get("sport")?.toString();
   const location = formData.get("location")?.toString();
 
   const supabase = await createClient();
@@ -169,15 +168,11 @@ export const createCompetitionAction = async (formData: FormData) => {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return encodedRedirect(
-      "error",
-      "/dashboard",
-      "You must be logged in to create a competition",
-    );
+    return { error: "You must be logged in to create a competition" };
   }
 
-  if (!name || !eventDate || !sport || !location) {
-    return encodedRedirect("error", "/dashboard", "All fields are required");
+  if (!name || !eventDate || !location) {
+    return { error: "All fields are required" };
   }
 
   const { data, error } = await supabase
@@ -185,7 +180,7 @@ export const createCompetitionAction = async (formData: FormData) => {
     .insert({
       name,
       event_date: eventDate,
-      description: `${sport} competition`,
+      description: "Competition",
       venue: location,
       created_by: user.id,
       is_visible: true,
@@ -194,21 +189,13 @@ export const createCompetitionAction = async (formData: FormData) => {
     .select();
 
   if (error) {
-    return encodedRedirect(
-      "error",
-      "/dashboard",
-      "Failed to create competition: " + error.message,
-    );
+    return { error: "Failed to create competition: " + error.message };
   }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/athlete");
 
-  return encodedRedirect(
-    "success",
-    "/dashboard",
-    "Competition created successfully!",
-  );
+  return { success: true, data };
 };
 
 export const updateCompetitionAction = async (formData: FormData) => {

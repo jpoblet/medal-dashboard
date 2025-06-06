@@ -2,10 +2,11 @@ import DashboardNavbar from "@/components/dashboard-navbar";
 import CreateCompetitionModal from "@/components/create-competition-modal";
 import EditCompetitionModal from "@/components/edit-competition-modal";
 import CompetitionCard from "@/components/competition-card";
-import { InfoIcon, Calendar } from "lucide-react";
+import { InfoIcon, Calendar, Filter } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createClient } from "../../../supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
+import DashboardFilters from "@/components/dashboard-filters";
 
 export default async function Dashboard() {
   const supabase = await createClient();
@@ -45,11 +46,13 @@ export default async function Dashboard() {
               <h1 className="text-3xl font-bold">My Competitions</h1>
               <CreateCompetitionModal />
             </div>
-            <div className="bg-secondary/50 text-sm p-3 px-4 rounded-lg text-muted-foreground flex gap-2 items-center">
-              <InfoIcon size="14" />
-              <span>Manage your sport events and competitions</span>
+            <div className="text-muted-foreground text-sm">
+              Manage your sport events and competitions
             </div>
           </header>
+
+          {/* Filters Section */}
+          <DashboardFilters competitions={competitions || []} />
 
           {/* Competitions Section */}
           <section className="space-y-6">
@@ -76,17 +79,13 @@ export default async function Dashboard() {
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {competitions?.map((competition) => (
-                  <div key={competition.id} className="space-y-4">
-                    <CompetitionCard
-                      currentUserId={user.id}
-                      competition={competition}
-                      showManageButton={true}
-                      showCreator={false}
-                    />
-                    <div className="px-6 pb-4">
-                      <EditCompetitionModal competition={competition} />
-                    </div>
-                  </div>
+                  <CompetitionCard
+                    key={competition.id}
+                    currentUserId={user.id}
+                    competition={competition}
+                    showManageButton={true}
+                    showCreator={false}
+                  />
                 ))}
               </div>
             )}

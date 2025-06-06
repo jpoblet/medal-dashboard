@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { createCompetitionAction } from "@/app/actions";
 import { SubmitButton } from "@/components/submit-button";
+import { toast } from "sonner";
 
 const sports = ["Football", "Basketball", "Tennis", "Swimming", "Athletics"];
 
@@ -30,11 +31,21 @@ export default function CreateCompetitionModal() {
   const [selectedSport, setSelectedSport] = useState("");
 
   const handleSubmit = async (formData: FormData) => {
-    // Add the selected sport to the form data
-    formData.set("sport", selectedSport);
-    await createCompetitionAction(formData);
-    setOpen(false);
-    setSelectedSport("");
+    try {
+      // Add the selected sport to the form data
+      formData.set("sport", selectedSport);
+      const result = await createCompetitionAction(formData);
+
+      if (result?.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Competition created successfully!");
+        setOpen(false);
+        setSelectedSport("");
+      }
+    } catch (error) {
+      toast.error("Failed to create competition. Please try again.");
+    }
   };
 
   return (

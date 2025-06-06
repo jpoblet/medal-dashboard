@@ -49,7 +49,7 @@ export default function DashboardNavbar() {
           <Link
             href="/"
             prefetch
-            className="text-4xl font-serif italic font-bold"
+            className="text-3xl font-serif italic font-bold"
           >
             m
           </Link>
@@ -64,9 +64,9 @@ export default function DashboardNavbar() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 px-3">
                 {userRole === "event_manager" ? (
-                  <Flag className="h-6 w-6" />
+                  <Flag className="h-5 w-5" />
                 ) : (
-                  <Contact className="h-6 w-6" />
+                  <Contact className="h-5 w-5" />
                 )}
                 {userFullName && (
                   <span className="text-sm font-medium">{userFullName}</span>

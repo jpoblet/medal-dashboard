@@ -1,9 +1,8 @@
 import DashboardNavbar from "@/components/dashboard-navbar";
-import CompetitionCard from "@/components/competition-card";
-import { InfoIcon, Calendar } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createClient } from "../../../../supabase/server";
-import { Card, CardContent } from "@/components/ui/card";
+import AthleteFilters from "@/components/athlete-filters";
 
 export default async function Page() {
   const supabase = await createClient();
@@ -48,50 +47,25 @@ export default async function Page() {
         <div className="container mx-auto px-4 py-8 flex flex-col gap-8">
           <header className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold">Available Competitions</h1>
+              <h1 className="text-3xl font-bold">Competitions</h1>
             </div>
-            <div className="bg-secondary/50 text-sm p-3 px-4 rounded-lg text-muted-foreground flex gap-2 items-center">
-              <InfoIcon size="14" />
-              <span>Browse and view available sport competitions</span>
+            <div className="text-muted-foreground text-sm">
+              Browse and view available sport competitions
             </div>
           </header>
 
-          <section className="space-y-6">
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                Error loading competitions: {error.message}
-              </div>
-            )}
+          {/* Filters Section */}
+          <AthleteFilters
+            competitions={competitions || []}
+            userJoinedCompetitions={userJoinedCompetitions}
+            currentUserId={user.id}
+          />
 
-            {competitions && competitions.length === 0 ? (
-              <Card className="text-center py-12">
-                <CardContent>
-                  <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">
-                    No competitions available
-                  </h3>
-                  <p className="text-muted-foreground">
-                    There are currently no competitions available to view.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {competitions?.map((competition) => (
-                  <CompetitionCard
-                    currentUserId={user.id}
-                    showCreator={true}
-                    userJoinedCompetitions={userJoinedCompetitions}
-                    key={competition.id}
-                    competition={{
-                      ...competition,
-                      creator: { full_name: competition.creator_full_name },
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              Error loading competitions: {error.message}
+            </div>
+          )}
         </div>
       </main>
     </>
