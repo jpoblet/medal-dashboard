@@ -1,21 +1,75 @@
-import React from "react";
-import { updateSession } from "./supabase/middleware";
-import { type NextRequest } from "next/server";
+// /middleware.ts
+import { createServerClient } from "@supabase/ssr";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request);
+  let response = NextResponse.next();
+
+  try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () =>
+            request.cookies.getAll().map(({ name, value }) => ({
+              name,
+              value,
+            })),
+          setAll: (cookiesToSet) => {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
+      },
+    );
+
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    const path = request.nextUrl.pathname;
+
+    // Redirect to homepage if trying to access dashboard unauthenticated
+    if (path.startsWith("/dashboard") && (!user || error)) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    // Redirect from "/" to role-specific dashboard if logged in
+    if (path === "/" && user && !error) {
+      try {
+        const { data: userProfile } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        if (userProfile?.role === "participant") {
+          return NextResponse.redirect(
+            new URL("/dashboard/athlete", request.url),
+          );
+        } else {
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+        }
+      } catch (profileError) {
+        console.error("Error fetching user profile:", profileError);
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+    }
+  } catch (e) {
+    console.error("Middleware error:", e);
+    // Fallback to rendering the page anyway
+    return response;
+  }
+
+  return response;
 }
 
+// Match all paths except static/image/api assets
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
-     * Feel free to modify this pattern to include more paths.
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|api).*)",
   ],
 };
