@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import CompetitionDetailsPage from "@/components/competition-details-page";
 import { Tables } from "@/types/supabase";
 import { createClient } from "../../supabase/client";
 import { toast } from "sonner";
 import { joinCompetitionAction } from "@/app/actions";
-import { useTransition } from "react";
 
 type Competition = Tables<"competitions"> & {
   creator?: {
@@ -49,12 +48,14 @@ export default function CompetitionPage({
       try {
         const formData = new FormData();
         formData.append("competition_id", competition.id);
-        const result = await joinCompetitionAction(formData);
+        const result = (await joinCompetitionAction(formData)) as {
+          error?: string;
+        };
+
         if (result?.error) {
           toast.error(result.error);
         } else {
           toast.success("Successfully joined competition!");
-          // Refresh the page to update the joined status
           router.refresh();
         }
       } catch (e) {
