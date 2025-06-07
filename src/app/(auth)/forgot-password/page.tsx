@@ -60,7 +60,9 @@ export default async function ForgotPassword(props: {
               </div>
 
               <SubmitButton
-                formAction={forgotPasswordAction}
+                formAction={async (formData: FormData) => {
+                  await forgotPasswordAction(formData);
+                }}
                 pendingText="Sending reset link..."
                 className="w-full"
               >
