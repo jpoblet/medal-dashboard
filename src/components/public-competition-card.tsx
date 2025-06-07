@@ -219,18 +219,20 @@ export default function PublicCompetitionCard({
         {/* Action Buttons */}
         <div className="pt-4 border-t space-y-2">
           {isManager && <EditCompetitionModal competition={competition} />}
-          {/* Join with Medal Button */}
-          <RegisterWithMedal eventId={id}>
-            <Button
-              variant="outline"
-              className="flex items-center px-6 bg-yellow-300 hover:bg-yellow-400 text-black border-none rounded-full"
-            >
-              <div className="flex gap-2 items-baseline pb-1">
-                <div className="font-bold italic font-serif text-xl">m</div>
-                Join with Medal
-              </div>
-            </Button>
-          </RegisterWithMedal>
+          {/* Join with Medal Button - only show when registration is open */}
+          {registration_open && (
+            <RegisterWithMedal eventId={id}>
+              <Button
+                variant="outline"
+                className="flex items-center px-6 bg-yellow-300 hover:bg-yellow-400 text-black border-none rounded-full"
+              >
+                <div className="flex gap-2 items-baseline pb-1">
+                  <div className="font-bold italic font-serif text-xl">m</div>
+                  Join with Medal
+                </div>
+              </Button>
+            </RegisterWithMedal>
+          )}
         </div>
       </CardContent>
     </Card>

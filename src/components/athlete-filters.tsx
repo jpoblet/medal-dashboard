@@ -128,27 +128,6 @@ export default function AthleteFilters({
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <Label
-                htmlFor="sport-filter"
-                className="text-sm font-medium mb-2 block"
-              >
-                Sport Type
-              </Label>
-              <Select value={selectedSport} onValueChange={setSelectedSport}>
-                <SelectTrigger id="sport-filter">
-                  <SelectValue placeholder="All sports" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All sports</SelectItem>
-                  {availableSports.map((sport) => (
-                    <SelectItem key={sport} value={sport}>
-                      {sport}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex-1">
-              <Label
                 htmlFor="organizer-filter"
                 className="text-sm font-medium mb-2 block"
               >
