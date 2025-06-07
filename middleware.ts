@@ -32,6 +32,11 @@ export async function middleware(request: NextRequest) {
 
     const path = request.nextUrl.pathname;
 
+    // Allow public access to competitions page
+    if (path.startsWith("/competitions")) {
+      return response;
+    }
+
     // Redirect to homepage if trying to access dashboard unauthenticated
     if (path.startsWith("/dashboard") && (!user || error)) {
       return NextResponse.redirect(new URL("/", request.url));
