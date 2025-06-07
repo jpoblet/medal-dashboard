@@ -6,8 +6,11 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "../../supabase/server";
 
 // ---------- AUTH ----------
+export type SignUpResult = { success: true } | { error: string };
 
-export const signUpAction = async (formData: FormData) => {
+export const signUpAction = async (
+  formData: FormData,
+): Promise<SignUpResult> => {
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
   const fullName = formData.get("full_name")?.toString() || "";
