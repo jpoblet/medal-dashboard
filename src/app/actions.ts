@@ -7,7 +7,7 @@ import { createClient } from "../../supabase/server";
 
 // ---------- AUTH ----------
 
-export const signUpAction = async (formData: FormData) => {
+export const signUpAction = async (formData: FormData): Promise<void> => {
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
   const fullName = formData.get("full_name")?.toString() || "";
@@ -17,7 +17,9 @@ export const signUpAction = async (formData: FormData) => {
   const origin = headers().get("origin");
 
   if (!email || !password) {
-    return { error: "Email and password are required" };
+    redirect(
+      `/signup?error=${encodeURIComponent("Email and password are required")}`,
+    );
   }
 
   const {
@@ -38,21 +40,30 @@ export const signUpAction = async (formData: FormData) => {
 
   if (error) {
     if (error.code === "user_already_exists") {
-      return {
-        error:
+      redirect(
+        `/signup?error=${encodeURIComponent(
           "An account with this email already exists. Please sign in instead.",
-      };
+        )}`,
+      );
     }
-    return { error: error.message };
+    redirect(`/signup?error=${encodeURIComponent(error.message)}`);
   }
 
-  return { success: true };
+  redirect(
+    "/signin?success=Account created, please check your email to confirm.",
+  );
 };
 
-export const signInAction = async (formData: FormData) => {
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
+export const signInAction = async (formData: FormData): Promise<void> => {
+  const email = formData.get("email")?.toString();
+  const password = formData.get("password")?.toString();
   const supabase = await createClient();
+
+  if (!email || !password) {
+    redirect(
+      `/signin?error=${encodeURIComponent("Email and password are required")}`,
+    );
+  }
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -60,9 +71,7 @@ export const signInAction = async (formData: FormData) => {
   });
 
   if (error) {
-    return {
-      error: error.message,
-    };
+    redirect(`/signin?error=${encodeURIComponent(error.message)}`);
   }
 
   const { data: userProfile } = await supabase
@@ -72,22 +81,24 @@ export const signInAction = async (formData: FormData) => {
     .single();
 
   if (userProfile?.role === "participant") {
-    return redirect("/dashboard/athlete");
+    redirect("/dashboard/athlete");
   } else {
-    return redirect("/dashboard");
+    redirect("/dashboard");
   }
 };
 
-export const forgotPasswordAction = async (formData: FormData) => {
+export const forgotPasswordAction = async (
+  formData: FormData,
+): Promise<void> => {
   const email = formData.get("email")?.toString();
   const supabase = await createClient();
   const origin = headers().get("origin");
   const callbackUrl = formData.get("callbackUrl")?.toString();
 
   if (!email) {
-    return {
-      error: "Email is required",
-    };
+    redirect(
+      `/forgot-password?error=${encodeURIComponent("Email is required")}`,
+    );
   }
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -95,59 +106,61 @@ export const forgotPasswordAction = async (formData: FormData) => {
   });
 
   if (error) {
-    return { error: "Could not reset password" };
+    redirect(
+      `/forgot-password?error=${encodeURIComponent("Could not reset password")}`,
+    );
   }
 
   if (callbackUrl) {
-    return redirect(callbackUrl);
+    redirect(callbackUrl);
   }
 
-  return {
-    success: true,
-    message: "Check your email for a link to reset your password.",
-  };
+  redirect(
+    `/forgot-password?success=${encodeURIComponent("Check your email for a link to reset your password.")}`,
+  );
 };
 
-export const resetPasswordAction = async (formData: FormData) => {
+export const resetPasswordAction = async (
+  formData: FormData,
+): Promise<void> => {
   const supabase = await createClient();
-  const password = formData.get("password") as string;
-  const confirmPassword = formData.get("confirmPassword") as string;
+  const password = formData.get("password")?.toString();
+  const confirmPassword = formData.get("confirmPassword")?.toString();
 
   if (!password || !confirmPassword) {
-    return {
-      error: "Password and confirm password are required",
-    };
+    redirect(
+      `/reset-password?error=${encodeURIComponent("Password and confirm password are required")}`,
+    );
   }
 
   if (password !== confirmPassword) {
-    return {
-      error: "Passwords do not match",
-    };
+    redirect(
+      `/reset-password?error=${encodeURIComponent("Passwords do not match")}`,
+    );
   }
 
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    return {
-      error: "Password update failed",
-    };
+    redirect(
+      `/reset-password?error=${encodeURIComponent("Password update failed")}`,
+    );
   }
 
-  return {
-    success: true,
-    message: "Password updated",
-  };
+  redirect(`/signin?success=${encodeURIComponent("Password updated")}`);
 };
 
-export const signOutAction = async () => {
+export const signOutAction = async (): Promise<void> => {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  return redirect("/");
+  redirect("/");
 };
 
 // ---------- COMPETITIONS ----------
 
-export const createCompetitionAction = async (formData: FormData) => {
+export const createCompetitionAction = async (
+  formData: FormData,
+): Promise<void> => {
   const name = formData.get("name")?.toString();
   const eventDate = formData.get("event_date")?.toString();
   const location = formData.get("location")?.toString();
@@ -158,11 +171,15 @@ export const createCompetitionAction = async (formData: FormData) => {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "You must be logged in to create a competition" };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("You must be logged in to create a competition")}`,
+    );
   }
 
   if (!name || !eventDate || !location) {
-    return { error: "All fields are required" };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("All fields are required")}`,
+    );
   }
 
   const { data, error } = await supabase
@@ -179,16 +196,20 @@ export const createCompetitionAction = async (formData: FormData) => {
     .select();
 
   if (error) {
-    return { error: "Failed to create competition: " + error.message };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("Failed to create competition: " + error.message)}`,
+    );
   }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/athlete");
 
-  return { success: true, data };
+  redirect(`/dashboard?success=${encodeURIComponent("Competition created!")}`);
 };
 
-export const updateCompetitionAction = async (formData: FormData) => {
+export const updateCompetitionAction = async (
+  formData: FormData,
+): Promise<void> => {
   const id = formData.get("id")?.toString();
   const name = formData.get("name")?.toString();
   const description = formData.get("description")?.toString();
@@ -204,7 +225,9 @@ export const updateCompetitionAction = async (formData: FormData) => {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "You must be logged in to update a competition" };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("You must be logged in to update a competition")}`,
+    );
   }
 
   const { data: existingCompetition, error: fetchError } = await supabase
@@ -215,9 +238,9 @@ export const updateCompetitionAction = async (formData: FormData) => {
     .single();
 
   if (fetchError || !existingCompetition) {
-    return {
-      error: "Competition not found or you don't have permission to edit it",
-    };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("Competition not found or you don't have permission to edit it")}`,
+    );
   }
 
   const updateData = {
@@ -238,22 +261,28 @@ export const updateCompetitionAction = async (formData: FormData) => {
     .select();
 
   if (error) {
-    return { error: "Failed to update competition: " + error.message };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("Failed to update competition: " + error.message)}`,
+    );
   }
 
   if (!data || data.length === 0) {
-    return {
-      error: "No competition was updated - you may not have permission",
-    };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("No competition was updated - you may not have permission")}`,
+    );
   }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/athlete");
 
-  return { success: true, message: "Competition updated successfully!" };
+  redirect(
+    `/dashboard?success=${encodeURIComponent("Competition updated successfully!")}`,
+  );
 };
 
-export const deleteCompetitionAction = async (formData: FormData) => {
+export const deleteCompetitionAction = async (
+  formData: FormData,
+): Promise<void> => {
   const id = formData.get("id")?.toString();
 
   const supabase = await createClient();
@@ -262,11 +291,15 @@ export const deleteCompetitionAction = async (formData: FormData) => {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "You must be logged in to delete a competition" };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("You must be logged in to delete a competition")}`,
+    );
   }
 
   if (!id) {
-    return { error: "Competition ID is required" };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("Competition ID is required")}`,
+    );
   }
 
   const { data, error } = await supabase
@@ -277,24 +310,30 @@ export const deleteCompetitionAction = async (formData: FormData) => {
     .select();
 
   if (error) {
-    return { error: "Failed to delete competition: " + error.message };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("Failed to delete competition: " + error.message)}`,
+    );
   }
 
   if (!data || data.length === 0) {
-    return {
-      error: "No competition was deleted - you may not have permission",
-    };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("No competition was deleted - you may not have permission")}`,
+    );
   }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/athlete");
 
-  return { success: true, message: "Competition deleted successfully!" };
+  redirect(
+    `/dashboard?success=${encodeURIComponent("Competition deleted successfully!")}`,
+  );
 };
 
 // ---------- PARTICIPATION ----------
 
-export const joinCompetitionAction = async (formData: FormData) => {
+export const joinCompetitionAction = async (
+  formData: FormData,
+): Promise<void> => {
   const competitionId = formData.get("competition_id")?.toString();
   const supabase = await createClient();
 
@@ -303,11 +342,15 @@ export const joinCompetitionAction = async (formData: FormData) => {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "You must be logged in to join a competition" };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("You must be logged in to join a competition")}`,
+    );
   }
 
   if (!competitionId) {
-    return { error: "Competition ID is required" };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("Competition ID is required")}`,
+    );
   }
 
   const userId = user.id;
@@ -320,7 +363,9 @@ export const joinCompetitionAction = async (formData: FormData) => {
     .single();
 
   if (existingParticipant) {
-    return { error: "You are already registered for this competition" };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("You are already registered for this competition")}`,
+    );
   }
 
   const { data, error: insertError } = await supabase
@@ -332,15 +377,21 @@ export const joinCompetitionAction = async (formData: FormData) => {
     .select();
 
   if (insertError) {
-    return { error: "Failed to join competition: " + insertError.message };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("Failed to join competition: " + insertError.message)}`,
+    );
   }
 
   if (!data || data.length === 0) {
-    return { error: "Failed to join competition - no data returned" };
+    redirect(
+      `/dashboard?error=${encodeURIComponent("Failed to join competition - no data returned")}`,
+    );
   }
 
   revalidatePath("/dashboard/athlete");
   revalidatePath("/dashboard");
 
-  return { success: true, message: "You successfully joined the competition!" };
+  redirect(
+    `/dashboard/athlete?success=${encodeURIComponent("You successfully joined the competition!")}`,
+  );
 };
