@@ -30,6 +30,7 @@ interface Competition {
   description: string | null;
   event_date: string | null;
   venue: string | null;
+  sport: string | null;
 }
 
 interface UserProfile {
@@ -85,7 +86,7 @@ export default function RegisterWithMedal({
       // Fetch competition details
       const { data: competitionData, error: competitionError } = await supabase
         .from("competitions")
-        .select("id, name, description, event_date, venue")
+        .select("id, name, description, event_date, venue, sport")
         .eq("id", eventId)
         .single();
 
@@ -381,6 +382,12 @@ export default function RegisterWithMedal({
                   <Calendar className="w-4 h-4" />
                   <span>{formatDate(competition?.event_date || null)}</span>
                 </div>
+                {competition?.sport && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <MapPin className="w-4 h-4" />
+                    <span>{competition.sport}</span>
+                  </div>
+                )}
                 {competition?.venue && (
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <MapPin className="w-4 h-4" />

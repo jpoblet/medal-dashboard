@@ -1,47 +1,167 @@
-import { createClient } from "../../../supabase/server";
+"use client";
+
+import { useState, useEffect } from "react";
+import { createClient } from "@/utils/supabase/client";
 import PublicCompetitionCard from "@/components/public-competition-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export default async function CompetitionsPage() {
-  const supabase = await createClient();
+type Competition = {
+  id: string;
+  name: string;
+  description: string | null;
+  event_date: string | null;
+  venue: string | null;
+  sport: string | null;
+  is_visible: boolean;
+  registration_open: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+  created_by: string | null;
+  creator_full_name: string | null;
+};
 
-  // Check if user is authenticated (but don't require it)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export default function CompetitionsPage() {
+  const [user, setUser] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [userJoinedCompetitions, setUserJoinedCompetitions] = useState<
+    string[]
+  >([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  let userRole = null;
-  let userJoinedCompetitions: string[] = [];
+  useEffect(() => {
+    const fetchData = async () => {
+      const supabase = createClient();
 
-  if (user) {
-    // Get user role if authenticated
-    const { data: userProfile } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+      // Check if user is authenticated (but don't require it)
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser();
 
-    userRole = userProfile?.role || "participant";
+      setUser(currentUser);
 
-    // Fetch user's joined competitions if authenticated
-    const { data: userParticipations } = await supabase
-      .from("competition_participants")
-      .select("competition_id")
-      .eq("user_id", user.id);
+      if (currentUser) {
+        // Get user role if authenticated
+        const { data: userProfile } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", currentUser.id)
+          .single();
 
-    userJoinedCompetitions =
-      userParticipations?.map((p) => p.competition_id) || [];
+        setUserRole(userProfile?.role || "participant");
+
+        // Fetch user's joined competitions if authenticated
+        const { data: userParticipations } = await supabase
+          .from("competition_participants")
+          .select("competition_id")
+          .eq("user_id", currentUser.id);
+
+        setUserJoinedCompetitions(
+          userParticipations?.map((p) => p.competition_id) || [],
+        );
+      }
+
+      // Fetch all visible competitions
+      const { data: competitionsData, error: competitionsError } =
+        await supabase
+          .from("competitions_with_creators")
+          .select("*")
+          .eq("is_visible", true)
+          .order("created_at", { ascending: false });
+
+      if (competitionsError) {
+        setError(competitionsError.message);
+      } else {
+        setCompetitions(competitionsData || []);
+      }
+
+      setLoading(false);
+
+      // Set up real-time subscription for competitions
+      const competitionsChannel = supabase
+        .channel("competitions-changes-public")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "competitions",
+          },
+          async (payload) => {
+            console.log("Competition change detected:", payload);
+
+            // Refetch competitions data
+            const { data: updatedCompetitions, error: refetchError } =
+              await supabase
+                .from("competitions_with_creators")
+                .select("*")
+                .eq("is_visible", true)
+                .order("created_at", { ascending: false });
+
+            if (!refetchError && updatedCompetitions) {
+              setCompetitions(updatedCompetitions);
+            }
+          },
+        )
+        .subscribe();
+
+      // Set up real-time subscription for participation changes (if user is authenticated)
+      let participationsChannel;
+      if (currentUser) {
+        participationsChannel = supabase
+          .channel("participations-changes-public")
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "competition_participants",
+              filter: `user_id=eq.${currentUser.id}`,
+            },
+            async (payload) => {
+              console.log("Participation change detected:", payload);
+
+              // Refetch user participations
+              const { data: updatedParticipations } = await supabase
+                .from("competition_participants")
+                .select("competition_id")
+                .eq("user_id", currentUser.id);
+
+              setUserJoinedCompetitions(
+                updatedParticipations?.map((p) => p.competition_id) || [],
+              );
+            },
+          )
+          .subscribe();
+      }
+
+      // Cleanup subscriptions on unmount
+      return () => {
+        supabase.removeChannel(competitionsChannel);
+        if (participationsChannel) {
+          supabase.removeChannel(participationsChannel);
+        }
+      };
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <main className="w-full">
+          <div className="container mx-auto px-4 py-8">
+            <div className="text-center">Loading...</div>
+          </div>
+        </main>
+      </div>
+    );
   }
-
-  // Fetch all visible competitions
-  const { data: competitions, error } = await supabase
-    .from("competitions_with_creators")
-    .select("*")
-    .eq("is_visible", true)
-    .order("created_at", { ascending: false });
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -158,6 +158,7 @@ export const createCompetitionAction = async (formData: FormData) => {
   const name = formData.get("name")?.toString();
   const eventDate = formData.get("event_date")?.toString();
   const location = formData.get("location")?.toString();
+  const sport = formData.get("sport")?.toString();
 
   const supabase = await createClient();
   const {
@@ -168,7 +169,7 @@ export const createCompetitionAction = async (formData: FormData) => {
     return { error: "You must be logged in to create a competition" };
   }
 
-  if (!name || !eventDate || !location) {
+  if (!name || !eventDate || !location || !sport) {
     return { error: "All fields are required" };
   }
 
@@ -177,8 +178,9 @@ export const createCompetitionAction = async (formData: FormData) => {
     .insert({
       name,
       event_date: eventDate,
-      description: "Competition",
+      description: "",
       venue: location,
+      sport: sport,
       created_by: user.id,
       is_visible: true,
       registration_open: true,
@@ -191,8 +193,9 @@ export const createCompetitionAction = async (formData: FormData) => {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/athlete");
+  revalidatePath("/competitions");
 
-  return { success: true, data };
+  return { success: true, data, refresh: true };
 };
 
 export const updateCompetitionAction = async (formData: FormData) => {
@@ -200,6 +203,7 @@ export const updateCompetitionAction = async (formData: FormData) => {
   const name = formData.get("name")?.toString();
   const description = formData.get("description")?.toString();
   const eventDate = formData.get("event_date")?.toString();
+  const sport = formData.get("sport")?.toString();
   const venue = formData.get("venue")?.toString();
   const isVisible = formData.get("is_visible")?.toString() === "true";
   const registrationOpen =
@@ -232,6 +236,7 @@ export const updateCompetitionAction = async (formData: FormData) => {
     description,
     event_date: eventDate,
     venue,
+    sport,
     is_visible: isVisible,
     registration_open: registrationOpen,
     updated_at: new Date().toISOString(),
@@ -256,8 +261,13 @@ export const updateCompetitionAction = async (formData: FormData) => {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/athlete");
+  revalidatePath("/competitions");
 
-  return { success: true, message: "Competition updated successfully!" };
+  return {
+    success: true,
+    message: "Competition updated successfully!",
+    refresh: true,
+  };
 };
 
 export const deleteCompetitionAction = async (formData: FormData) => {
@@ -295,8 +305,13 @@ export const deleteCompetitionAction = async (formData: FormData) => {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/athlete");
+  revalidatePath("/competitions");
 
-  return { success: true, message: "Competition deleted successfully!" };
+  return {
+    success: true,
+    message: "Competition deleted successfully!",
+    refresh: true,
+  };
 };
 
 // ---------- PARTICIPATION ----------

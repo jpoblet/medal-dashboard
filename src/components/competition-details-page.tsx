@@ -9,6 +9,7 @@ import {
   User,
   UserCheck,
   Image,
+  Volleyball,
   Map,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +67,7 @@ export default function CompetitionDetailsPage({
     description,
     event_date,
     venue,
+    sport,
     is_visible,
     registration_open,
     created_by,
@@ -269,12 +271,14 @@ export default function CompetitionDetailsPage({
                     icon={Calendar}
                     label="Date"
                     text={new Date(event_date).toLocaleDateString("en-GB", {
-                      weekday: "long",
+                      day: "2-digit",
+                      month: "2-digit",
                       year: "numeric",
-                      month: "long",
-                      day: "numeric",
                     })}
                   />
+                )}
+                {sport && (
+                  <InfoRow icon={Volleyball} label="Sport" text={sport} />
                 )}
                 {venue && <InfoRow icon={MapPin} label="Venue" text={venue} />}
                 <InfoRow
@@ -328,7 +332,14 @@ export default function CompetitionDetailsPage({
                         )}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {new Date(participant.joined_at).toLocaleDateString()}
+                        {new Date(participant.joined_at).toLocaleDateString(
+                          "en-GB",
+                          {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          },
+                        )}
                       </div>
                     </div>
                   ))}

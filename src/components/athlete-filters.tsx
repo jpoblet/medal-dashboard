@@ -21,6 +21,7 @@ interface Competition {
   description: string | null;
   event_date: string | null;
   venue: string | null;
+  sport: string | null;
   is_visible: boolean;
   registration_open: boolean;
   created_at: string | null;
@@ -40,32 +41,34 @@ export default function AthleteFilters({
   userJoinedCompetitions,
   currentUserId,
 }: AthleteFiltersProps) {
-  const searchParams = useSearchParams();
   const [selectedSport, setSelectedSport] = useState<string>("all");
   const [selectedOrganizer, setSelectedOrganizer] = useState<string>("all");
   const [showOpenRegistrationOnly, setShowOpenRegistrationOnly] =
     useState(false);
 
+  let searchParams;
+  try {
+    searchParams = useSearchParams();
+  } catch (error) {
+    searchParams = null;
+  }
+
   // Set initial filter values from URL parameters
   useEffect(() => {
-    const organizerParam = searchParams.get("organizer");
-    if (organizerParam) {
-      setSelectedOrganizer(organizerParam);
+    if (searchParams) {
+      const organizerParam = searchParams.get("organizer");
+      if (organizerParam) {
+        setSelectedOrganizer(organizerParam);
+      }
     }
   }, [searchParams]);
 
-  // Extract unique sports from competition descriptions
+  // Extract unique sports from competition sport field
   const availableSports = useMemo(() => {
     const sports = new Set<string>();
     competitions.forEach((competition) => {
-      if (competition.description) {
-        // Extract sport from description (assuming format like "Basketball competition")
-        const sport = competition.description
-          .replace(" competition", "")
-          .trim();
-        if (sport) {
-          sports.add(sport);
-        }
+      if (competition.sport) {
+        sports.add(competition.sport);
       }
     });
     return Array.from(sports).sort();
@@ -87,10 +90,7 @@ export default function AthleteFilters({
     return competitions.filter((competition) => {
       // Sport filter
       if (selectedSport !== "all") {
-        const competitionSport = competition.description
-          ?.replace(" competition", "")
-          .trim();
-        if (competitionSport !== selectedSport) {
+        if (competition.sport !== selectedSport) {
           return false;
         }
       }
@@ -126,6 +126,27 @@ export default function AthleteFilters({
             <h3 className="font-semibold">Filters</h3>
           </div>
           <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <Label
+                htmlFor="sport-filter"
+                className="text-sm font-medium mb-2 block"
+              >
+                Sport
+              </Label>
+              <Select value={selectedSport} onValueChange={setSelectedSport}>
+                <SelectTrigger id="sport-filter">
+                  <SelectValue placeholder="All sports" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All sports</SelectItem>
+                  {availableSports.map((sport) => (
+                    <SelectItem key={sport} value={sport}>
+                      {sport}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex-1">
               <Label
                 htmlFor="organizer-filter"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +38,7 @@ export default function EditCompetitionModal({
   const [registrationOpen, setRegistrationOpen] = useState(
     competition.registration_open ?? true,
   );
+  const router = useRouter();
 
   const handleSubmit = async (formData: FormData) => {
     // Add the toggle states to the form data
@@ -44,13 +46,13 @@ export default function EditCompetitionModal({
     formData.set("registration_open", registrationOpen.toString());
     formData.set("id", competition.id);
 
-    await updateCompetitionAction(formData);
+    const result = await updateCompetitionAction(formData);
     setOpen(false);
   };
 
   const handleDelete = async (formData: FormData) => {
     formData.set("id", competition.id);
-    await deleteCompetitionAction(formData);
+    const result = await deleteCompetitionAction(formData);
     setDeleteOpen(false);
     setOpen(false);
   };
@@ -107,7 +109,16 @@ export default function EditCompetitionModal({
               required
             />
           </div>
-
+          <div className="space-y-2">
+            <Label htmlFor="sport">Sport</Label>
+            <Input
+              id="sport"
+              name="sport"
+              defaultValue={competition.sport || ""}
+              placeholder="Enter the sport"
+              required
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="venue">Venue</Label>
             <Input
