@@ -2,6 +2,8 @@
 
 import { useState, ReactNode } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { signOutAction } from "@/app/actions";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -50,6 +52,7 @@ export default function RegisterWithMedal({
   const [signInError, setSignInError] = useState<string | null>(null);
   const { toast } = useToast();
   const supabase = createClient();
+  const router = useRouter();
 
   const handleClick = async () => {
     try {
@@ -195,6 +198,18 @@ export default function RegisterWithMedal({
       // Reset all states
       setCompetition(null);
       setUserProfile(null);
+
+      // Log out the user after successful registration and redirect
+      setTimeout(async () => {
+        try {
+          await signOutAction();
+          router.push("/competitions");
+        } catch (error) {
+          console.error("Error logging out:", error);
+          // Still redirect even if logout fails
+          router.push("/competitions");
+        }
+      }, 1000); // Small delay to ensure toast is visible
     } catch (error) {
       console.error("Registration error:", error);
       toast({
