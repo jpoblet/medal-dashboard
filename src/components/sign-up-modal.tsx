@@ -32,8 +32,13 @@ export default function SignUpModal({
 
   const handleSubmit = async (formData: FormData) => {
     try {
-      await signUpAction(formData);
-      onOpenChange(false);
+      const result = await signUpAction(formData);
+      if (result && typeof result === "object" && "error" in result) {
+        setMessage({ error: result.error as string });
+      } else {
+        onOpenChange(false);
+        setMessage(null);
+      }
     } catch (error) {
       setMessage({ error: "An error occurred during sign up" });
     }
