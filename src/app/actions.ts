@@ -1,6 +1,5 @@
 "use server";
 
-import { encodedRedirect } from "@/utils/utils";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -18,7 +17,7 @@ export const signUpAction = async (formData: FormData) => {
   const origin = headers().get("origin");
 
   if (!email || !password) {
-    return encodedRedirect("error", "/", "Email and password are required");
+    return { error: "Email and password are required" };
   }
 
   const {
@@ -31,28 +30,23 @@ export const signUpAction = async (formData: FormData) => {
       emailRedirectTo: `${origin}/auth/callback`,
       data: {
         full_name: fullName,
-        email: email,
-        role: role,
+        email,
+        role,
       },
     },
   });
 
   if (error) {
     if (error.code === "user_already_exists") {
-      return encodedRedirect(
-        "error",
-        "/",
-        "An account with this email already exists. Please sign in instead.",
-      );
+      return {
+        error:
+          "An account with this email already exists. Please sign in instead.",
+      };
     }
-    return encodedRedirect("error", "/", error.message);
+    return { error: error.message };
   }
 
-  return encodedRedirect(
-    "success",
-    "/",
-    "Thanks for signing up! You can now sign in to access your dashboard.",
-  );
+  return { success: true };
 };
 
 export const signInAction = async (formData: FormData) => {
@@ -66,7 +60,9 @@ export const signInAction = async (formData: FormData) => {
   });
 
   if (error) {
-    return encodedRedirect("error", "/", error.message);
+    return {
+      error: error.message,
+    };
   }
 
   const { data: userProfile } = await supabase
@@ -89,7 +85,9 @@ export const forgotPasswordAction = async (formData: FormData) => {
   const callbackUrl = formData.get("callbackUrl")?.toString();
 
   if (!email) {
-    return encodedRedirect("error", "/", "Email is required");
+    return {
+      error: "Email is required",
+    };
   }
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -97,18 +95,17 @@ export const forgotPasswordAction = async (formData: FormData) => {
   });
 
   if (error) {
-    return encodedRedirect("error", "/", "Could not reset password");
+    return { error: "Could not reset password" };
   }
 
   if (callbackUrl) {
     return redirect(callbackUrl);
   }
 
-  return encodedRedirect(
-    "success",
-    "/",
-    "Check your email for a link to reset your password.",
-  );
+  return {
+    success: true,
+    message: "Check your email for a link to reset your password.",
+  };
 };
 
 export const resetPasswordAction = async (formData: FormData) => {
@@ -117,36 +114,29 @@ export const resetPasswordAction = async (formData: FormData) => {
   const confirmPassword = formData.get("confirmPassword") as string;
 
   if (!password || !confirmPassword) {
-    return encodedRedirect(
-      "error",
-      "/protected/reset-password",
-      "Password and confirm password are required",
-    );
+    return {
+      error: "Password and confirm password are required",
+    };
   }
 
   if (password !== confirmPassword) {
-    return encodedRedirect(
-      "error",
-      "/dashboard/reset-password",
-      "Passwords do not match",
-    );
+    return {
+      error: "Passwords do not match",
+    };
   }
 
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    return encodedRedirect(
-      "error",
-      "/dashboard/reset-password",
-      "Password update failed",
-    );
+    return {
+      error: "Password update failed",
+    };
   }
 
-  return encodedRedirect(
-    "success",
-    "/protected/reset-password",
-    "Password updated",
-  );
+  return {
+    success: true,
+    message: "Password updated",
+  };
 };
 
 export const signOutAction = async () => {
@@ -214,11 +204,7 @@ export const updateCompetitionAction = async (formData: FormData) => {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return encodedRedirect(
-      "error",
-      "/dashboard",
-      "You must be logged in to update a competition",
-    );
+    return { error: "You must be logged in to update a competition" };
   }
 
   const { data: existingCompetition, error: fetchError } = await supabase
@@ -229,11 +215,9 @@ export const updateCompetitionAction = async (formData: FormData) => {
     .single();
 
   if (fetchError || !existingCompetition) {
-    return encodedRedirect(
-      "error",
-      "/dashboard",
-      "Competition not found or you don't have permission to edit it",
-    );
+    return {
+      error: "Competition not found or you don't have permission to edit it",
+    };
   }
 
   const updateData = {
@@ -254,29 +238,19 @@ export const updateCompetitionAction = async (formData: FormData) => {
     .select();
 
   if (error) {
-    return encodedRedirect(
-      "error",
-      "/dashboard",
-      "Failed to update competition: " + error.message,
-    );
+    return { error: "Failed to update competition: " + error.message };
   }
 
   if (!data || data.length === 0) {
-    return encodedRedirect(
-      "error",
-      "/dashboard",
-      "No competition was updated - you may not have permission",
-    );
+    return {
+      error: "No competition was updated - you may not have permission",
+    };
   }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/athlete");
 
-  return encodedRedirect(
-    "success",
-    "/dashboard",
-    "Competition updated successfully!",
-  );
+  return { success: true, message: "Competition updated successfully!" };
 };
 
 export const deleteCompetitionAction = async (formData: FormData) => {
@@ -288,15 +262,11 @@ export const deleteCompetitionAction = async (formData: FormData) => {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return encodedRedirect(
-      "error",
-      "/dashboard",
-      "You must be logged in to delete a competition",
-    );
+    return { error: "You must be logged in to delete a competition" };
   }
 
   if (!id) {
-    return encodedRedirect("error", "/dashboard", "Competition ID is required");
+    return { error: "Competition ID is required" };
   }
 
   const { data, error } = await supabase
@@ -307,29 +277,19 @@ export const deleteCompetitionAction = async (formData: FormData) => {
     .select();
 
   if (error) {
-    return encodedRedirect(
-      "error",
-      "/dashboard",
-      "Failed to delete competition: " + error.message,
-    );
+    return { error: "Failed to delete competition: " + error.message };
   }
 
   if (!data || data.length === 0) {
-    return encodedRedirect(
-      "error",
-      "/dashboard",
-      "No competition was deleted - you may not have permission",
-    );
+    return {
+      error: "No competition was deleted - you may not have permission",
+    };
   }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/athlete");
 
-  return encodedRedirect(
-    "success",
-    "/dashboard",
-    "Competition deleted successfully!",
-  );
+  return { success: true, message: "Competition deleted successfully!" };
 };
 
 // ---------- PARTICIPATION ----------
@@ -343,24 +303,15 @@ export const joinCompetitionAction = async (formData: FormData) => {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return encodedRedirect(
-      "error",
-      "/dashboard/athlete",
-      "You must be logged in to join a competition",
-    );
+    return { error: "You must be logged in to join a competition" };
   }
 
   if (!competitionId) {
-    return encodedRedirect(
-      "error",
-      "/dashboard/athlete",
-      "Competition ID is required",
-    );
+    return { error: "Competition ID is required" };
   }
 
   const userId = user.id;
 
-  // Check if user is already registered
   const { data: existingParticipant } = await supabase
     .from("competition_participants")
     .select("id")
@@ -369,11 +320,7 @@ export const joinCompetitionAction = async (formData: FormData) => {
     .single();
 
   if (existingParticipant) {
-    return encodedRedirect(
-      "error",
-      "/dashboard/athlete",
-      "You are already registered for this competition",
-    );
+    return { error: "You are already registered for this competition" };
   }
 
   const { data, error: insertError } = await supabase
@@ -385,28 +332,15 @@ export const joinCompetitionAction = async (formData: FormData) => {
     .select();
 
   if (insertError) {
-    console.error("Database insertion error:", insertError);
-    return encodedRedirect(
-      "error",
-      "/dashboard/athlete",
-      "Failed to join competition: " + insertError.message,
-    );
+    return { error: "Failed to join competition: " + insertError.message };
   }
 
   if (!data || data.length === 0) {
-    return encodedRedirect(
-      "error",
-      "/dashboard/athlete",
-      "Failed to join competition - no data returned",
-    );
+    return { error: "Failed to join competition - no data returned" };
   }
 
   revalidatePath("/dashboard/athlete");
   revalidatePath("/dashboard");
 
-  return encodedRedirect(
-    "success",
-    "/dashboard/athlete",
-    "You successfully joined the competition!",
-  );
+  return { success: true, message: "You successfully joined the competition!" };
 };

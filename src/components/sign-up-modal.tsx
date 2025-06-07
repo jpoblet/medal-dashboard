@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signUpAction } from "@/app/actions";
+import { signUpAction, type SignUpResult } from "@/app/actions";
 import { FormMessage, Message } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
@@ -32,12 +32,13 @@ export default function SignUpModal({
 
   const handleSubmit = async (formData: FormData) => {
     try {
-      const result = await signUpAction(formData);
-      if (result && typeof result === "object" && "error" in result) {
-        setMessage({ error: result.error as string });
+      const result: SignUpResult = await signUpAction(formData);
+
+      if ("error" in result) {
+        setMessage({ error: result.error });
       } else {
-        onOpenChange(false);
         setMessage(null);
+        onOpenChange(false);
       }
     } catch (error) {
       setMessage({ error: "An error occurred during sign up" });
