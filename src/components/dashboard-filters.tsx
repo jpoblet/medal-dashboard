@@ -99,30 +99,7 @@ export default function DashboardFilters({
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-1">
-              <Label
-                htmlFor="organizer-filter"
-                className="text-sm font-medium mb-2 block"
-              >
-                Organizer
-              </Label>
-              <Select
-                value={selectedOrganizer}
-                onValueChange={setSelectedOrganizer}
-              >
-                <SelectTrigger id="organizer-filter">
-                  <SelectValue placeholder="All organizers" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All organizers</SelectItem>
-                  {availableOrganizers.map((organizer) => (
-                    <SelectItem key={organizer} value={organizer}>
-                      {organizer}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+
             <div className="flex items-center space-x-2">
               <Switch
                 id="registration-filter"

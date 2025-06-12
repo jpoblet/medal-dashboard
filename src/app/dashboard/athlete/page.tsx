@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import DashboardNavbar from "@/components/dashboard-navbar";
 import AthleteFilters from "@/components/athlete-filters";
 import { createClient } from "@/utils/supabase/client";
@@ -21,6 +22,10 @@ type Competition = {
 };
 
 export default function Page() {
+  const searchParams = useSearchParams();
+  const initialSport = searchParams.get("sport") || "all";
+  const initialOrganizer = searchParams.get("organizer") || "all";
+
   const [user, setUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -94,10 +99,7 @@ export default function Page() {
             schema: "public",
             table: "competitions",
           },
-          async (payload) => {
-            console.log("Competition change detected:", payload);
-
-            // Refetch competitions data
+          async () => {
             const { data: updatedCompetitions, error: refetchError } =
               await supabase
                 .from("competitions_with_creators")
@@ -123,10 +125,7 @@ export default function Page() {
             table: "competition_participants",
             filter: `user_id=eq.${currentUser.id}`,
           },
-          async (payload) => {
-            console.log("Participation change detected:", payload);
-
-            // Refetch user participations
+          async () => {
             const { data: updatedParticipations } = await supabase
               .from("competition_participants")
               .select("competition_id")
@@ -180,16 +179,17 @@ export default function Page() {
             </div>
           </header>
 
-          {/* Filters Section */}
           <AthleteFilters
-            competitions={competitions || []}
+            competitions={competitions}
             userJoinedCompetitions={userJoinedCompetitions}
             currentUserId={user.id}
+            initialSport={initialSport}
+            initialOrganizer={initialOrganizer}
           />
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              Error loading competitions: {error.message}
+              Error loading competitions: {error}
             </div>
           )}
         </div>

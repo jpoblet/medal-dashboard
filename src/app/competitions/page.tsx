@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import PublicCompetitionCard from "@/components/public-competition-card";
+import PublicCompetitionFilters from "@/components/public-competition-filters";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 import Link from "next/link";
@@ -24,6 +25,7 @@ type Competition = {
 };
 
 export default function CompetitionsPage() {
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -181,12 +183,12 @@ export default function CompetitionsPage() {
           <section className="space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                Error loading competitions: {error.message}
+                Error loading competitions: {error}
               </div>
             )}
 
             {competitions && competitions.length === 0 ? (
-              <Card className="text-center py-12">
+              <Card className="text-center py-12 bg-white">
                 <CardContent>
                   <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                   <h3 className="text-lg font-semibold mb-2">
@@ -208,21 +210,14 @@ export default function CompetitionsPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {competitions?.map((competition) => (
-                  <PublicCompetitionCard
-                    key={competition.id}
-                    currentUserId={user?.id}
-                    showCreator={true}
-                    userJoinedCompetitions={userJoinedCompetitions}
-                    userRole={userRole}
-                    competition={{
-                      ...competition,
-                      creator: { full_name: competition.creator_full_name },
-                    }}
-                  />
-                ))}
-              </div>
+              <PublicCompetitionFilters
+                competitions={competitions}
+                userJoinedCompetitions={userJoinedCompetitions}
+                currentUserId={user?.id}
+                userRole={userRole || undefined}
+                initialSport={searchParams?.get("sport") || "all"}
+                initialOrganizer={searchParams?.get("organizer") || "all"}
+              />
             )}
           </section>
         </div>

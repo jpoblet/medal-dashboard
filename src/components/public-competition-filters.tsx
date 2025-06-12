@@ -13,7 +13,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Filter, Calendar } from "lucide-react";
-import CompetitionCard from "@/components/competition-card";
+import PublicCompetitionCard from "@/components/public-competition-card";
 
 interface Competition {
   id: string;
@@ -30,21 +30,23 @@ interface Competition {
   creator_full_name: string | null;
 }
 
-interface AthleteFiltersProps {
+interface PublicCompetitionFiltersProps {
   competitions: Competition[];
   userJoinedCompetitions: string[];
-  currentUserId: string;
+  currentUserId?: string;
+  userRole?: string;
   initialSport?: string;
   initialOrganizer?: string;
 }
 
-export default function AthleteFilters({
+export default function PublicCompetitionFilters({
   competitions,
   userJoinedCompetitions,
   currentUserId,
+  userRole,
   initialSport = "all",
   initialOrganizer = "all",
-}: AthleteFiltersProps) {
+}: PublicCompetitionFiltersProps) {
   const [selectedSport, setSelectedSport] = useState(initialSport);
   const [selectedOrganizer, setSelectedOrganizer] = useState(initialOrganizer);
   const [showOpenRegistrationOnly, setShowOpenRegistrationOnly] =
@@ -100,7 +102,7 @@ export default function AthleteFilters({
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <Card className="border-none">
+      <Card className="border-none bg-white">
         <CardContent className="pt-6">
           <div className="flex items-center gap-2 mb-4">
             <Filter className="w-4 h-4" />
@@ -172,7 +174,7 @@ export default function AthleteFilters({
       {/* Results */}
       <section className="space-y-6">
         {filteredCompetitions.length === 0 ? (
-          <Card className="text-center py-12">
+          <Card className="text-center py-12 bg-white">
             <CardContent>
               <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-semibold mb-2">
@@ -186,11 +188,12 @@ export default function AthleteFilters({
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredCompetitions.map((competition) => (
-              <CompetitionCard
+              <PublicCompetitionCard
                 key={competition.id}
                 currentUserId={currentUserId}
                 showCreator={true}
                 userJoinedCompetitions={userJoinedCompetitions}
+                userRole={userRole}
                 competition={{
                   ...competition,
                   creator: { full_name: competition.creator_full_name },
