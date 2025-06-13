@@ -10,7 +10,7 @@ import { createClient } from "@/utils/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import DashboardFilters from "@/components/dashboard-filters";
 
-type Competition = {
+type CompetitionLocal = {
   id: string;
   name: string;
   description: string | null;
@@ -30,7 +30,7 @@ export default function Dashboard() {
 
   const [user, setUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [competitions, setCompetitions] = useState<CompetitionLocal[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
