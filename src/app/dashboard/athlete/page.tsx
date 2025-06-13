@@ -72,10 +72,15 @@ export default function Page() {
           .order("created_at", { ascending: false });
 
       if (competitionsError) {
-        setError(competitionsError.message);
-      } else {
-        setCompetitions(competitionsData || []);
-      }
+  setError(competitionsError.message);
+} else if (competitionsData) {
+  const filteredCompetitions = competitionsData.filter(
+    (c): c is Competition => c.id !== null
+  );
+  setCompetitions(filteredCompetitions);
+} else {
+  setCompetitions([]);
+}
 
       // Fetch user's joined competitions
       const { data: userParticipations } = await supabase
