@@ -6,7 +6,7 @@ import DashboardNavbar from "@/components/dashboard-navbar";
 import AthleteFilters from "@/components/athlete-filters";
 import { createClient } from "@/utils/supabase/client";
 
-type Competition = {
+type CompetitionLocal = {
   id: string;
   name: string;
   description: string | null;
@@ -18,7 +18,9 @@ type Competition = {
   created_at: string | null;
   updated_at: string | null;
   created_by: string | null;
-  creator_full_name: string | null;
+  creator?: {
+    full_name?: string | null;
+  };
 };
 
 export default function Page() {
@@ -28,7 +30,7 @@ export default function Page() {
 
   const [user, setUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [competitions, setCompetitions] = useState<CompetitionLocal[]>([]);
   const [userJoinedCompetitions, setUserJoinedCompetitions] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
