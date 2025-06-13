@@ -42,81 +42,94 @@ export default function Dashboard() {
     useState(false);
 
   useEffect(() => {
-    let competitionsChannel: ReturnType<typeof supabase.channel>;
+  let competitionsChannel: ReturnType<typeof supabase.channel>;
 
-    const fetchData = async () => {
-      const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser();
+  const fetchData = async () => {
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser();
 
-      if (!currentUser) {
-        window.location.href = "/";
-        return;
-      }
+    if (!currentUser) {
+      window.location.href = "/";
+      return;
+    }
 
-      setUser(currentUser);
+    setUser(currentUser);
 
-      const { data: profile } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", currentUser.id)
-        .single();
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", currentUser.id)
+      .single();
 
-      if (profile?.role !== "event_manager") {
-        window.location.href = "/dashboard/athlete";
-        return;
-      }
+    if (profile?.role !== "event_manager") {
+      window.location.href = "/dashboard/athlete";
+      return;
+    }
 
-      setUserProfile(profile);
+    setUserProfile(profile);
 
-      const { data: competitionsData, error: competitionsError } =
-        await supabase
-          .from("competitions")
-          .select("*, creator:users(full_name)")
-          .eq("created_by", currentUser.id)
-          .order("created_at", { ascending: false });
+    const { data: competitionsData, error: competitionsError } =
+      await supabase
+        .from("competitions")
+        .select("*, creator:users(full_name)")
+        .eq("created_by", currentUser.id)
+        .order("created_at", { ascending: false });
 
-      if (competitionsError) {
-        setError(competitionsError.message);
-      } else {
-        setCompetitions(competitionsData || []);
-      }
+    if (competitionsError) {
+      setError(competitionsError.message);
+    } else if (competitionsData) {
+      const normalizedCompetitions = competitionsData.map((comp) => ({
+        ...comp,
+        creator: comp.creator === null ? undefined : comp.creator,
+      }));
 
-      // Real-time sync
-      competitionsChannel = supabase
-        .channel("competitions-changes")
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "competitions",
-            filter: `created_by=eq.${currentUser.id}`,
-          },
-          async () => {
-            const { data: updatedCompetitions, error: refetchError } =
-              await supabase
-                .from("competitions")
-                .select("*, creator:users(full_name)")
-                .eq("created_by", currentUser.id)
-                .order("created_at", { ascending: false });
+      setCompetitions(normalizedCompetitions);
+    } else {
+      setCompetitions([]);
+    }
 
-            if (!refetchError && updatedCompetitions) {
-              setCompetitions(updatedCompetitions);
-            }
+    // Real-time sync
+    competitionsChannel = supabase
+      .channel("competitions-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "competitions",
+          filter: `created_by=eq.${currentUser.id}`,
+        },
+        async () => {
+          const { data: updatedCompetitions, error: refetchError } =
+            await supabase
+              .from("competitions")
+              .select("*, creator:users(full_name)")
+              .eq("created_by", currentUser.id)
+              .order("created_at", { ascending: false });
+
+          if (!refetchError && updatedCompetitions) {
+            const normalizedUpdated = updatedCompetitions.map((comp) => ({
+              ...comp,
+              creator: comp.creator === null ? undefined : comp.creator,
+            }));
+
+            setCompetitions(normalizedUpdated);
           }
-        )
-        .subscribe();
-    };
+        }
+      )
+      .subscribe();
+  };
 
-    fetchData().finally(() => setLoading(false));
+  fetchData().finally(() => setLoading(false));
 
-    return () => {
-      if (competitionsChannel) {
-        supabase.removeChannel(competitionsChannel);
-      }
-    };
-  }, []);
+  return () => {
+    if (competitionsChannel) {
+      supabase.removeChannel(competitionsChannel);
+    }
+  };
+}, []);
+
 
   const filteredCompetitions = useMemo(() => {
     return competitions.filter((competition) => {
