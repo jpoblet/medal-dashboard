@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition, useEffect, useState } from "react";
-import { Calendar, MapPin, Users, User, UserCheck } from "lucide-react";
+import { Calendar, MapPin, Flag, Ticket, Volleyball } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -44,7 +44,6 @@ interface PublicCompetitionCardProps {
 
 export default function PublicCompetitionCard({
   competition,
-  showManageButton = false,
   showCreator = true,
   currentUserId,
   userJoinedCompetitions = [],
@@ -56,6 +55,7 @@ export default function PublicCompetitionCard({
     description,
     event_date,
     venue,
+    sport,
     is_visible,
     registration_open,
     created_by,
@@ -171,19 +171,25 @@ export default function PublicCompetitionCard({
 
       <CardContent className="space-y-4">
         <div className="space-y-2 text-sm text-muted-foreground">
+          {sport && <InfoRow icon={Volleyball} text={sport} />}
+
           {event_date && (
             <InfoRow
               icon={Calendar}
-              text={new Date(event_date).toLocaleDateString("en-GB")}
+              text={new Date(event_date).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })}
             />
           )}
           {venue && <InfoRow icon={MapPin} text={venue} />}
           <InfoRow
-            icon={Users}
+            icon={Ticket}
             text={`Registration ${registration_open ? "Open" : "Closed"}`}
           />
           {showCreator && creator?.full_name && (
-            <InfoRow icon={User} text={`Created by: ${creator.full_name}`} />
+            <InfoRow icon={Flag} text={`Created by: ${creator.full_name}`} />
           )}
         </div>
 
@@ -204,15 +210,6 @@ export default function PublicCompetitionCard({
                 {isPending ? "Joining..." : "Join Competition"}
               </Button>
             )}
-          </div>
-        )}
-
-        {isManager && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <UserCheck className="w-4 h-4" />
-              Participants ({participants.length})
-            </div>
           </div>
         )}
 

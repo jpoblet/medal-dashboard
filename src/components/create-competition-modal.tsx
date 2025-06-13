@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,27 +14,16 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { createCompetitionAction } from "@/app/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { toast } from "sonner";
 
-const sports = ["Football", "Basketball", "Tennis", "Swimming", "Athletics"];
-
 export default function CreateCompetitionModal() {
   const [open, setOpen] = useState(false);
-  const [selectedSport, setSelectedSport] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (formData: FormData) => {
     try {
-      // Add the selected sport to the form data
-      formData.set("sport", selectedSport);
       const result = await createCompetitionAction(formData);
 
       if (result?.error) {
@@ -41,7 +31,6 @@ export default function CreateCompetitionModal() {
       } else {
         toast.success("Competition created successfully!");
         setOpen(false);
-        setSelectedSport("");
       }
     } catch (error) {
       toast.error("Failed to create competition. Please try again.");
@@ -73,7 +62,6 @@ export default function CreateCompetitionModal() {
               required
             />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="event_date">Event Date</Label>
             <Input id="event_date" name="event_date" type="date" required />
@@ -81,24 +69,13 @@ export default function CreateCompetitionModal() {
 
           <div className="space-y-2">
             <Label htmlFor="sport">Sport</Label>
-            <Select
-              value={selectedSport}
-              onValueChange={setSelectedSport}
+            <Input
+              id="sport"
+              name="sport"
+              placeholder="Enter the sport"
               required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a sport" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                {sports.map((sport) => (
-                  <SelectItem key={sport} value={sport}>
-                    {sport}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
             <Input
@@ -108,7 +85,6 @@ export default function CreateCompetitionModal() {
               required
             />
           </div>
-
           <div className="flex justify-end space-x-2 pt-4">
             <Button
               type="button"
@@ -117,10 +93,7 @@ export default function CreateCompetitionModal() {
             >
               Cancel
             </Button>
-            <SubmitButton
-              className="bg-gray-900 hover:bg-gray-800"
-              disabled={!selectedSport}
-            >
+            <SubmitButton className="bg-gray-900 hover:bg-gray-800">
               Create Competition
             </SubmitButton>
           </div>
