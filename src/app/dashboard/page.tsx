@@ -22,7 +22,9 @@ type CompetitionLocal = {
   created_at: string | null;
   updated_at: string | null;
   created_by: string | null;
-  creator: { full_name: string | null } | null;
+  creator?: {
+    full_name?: string | null;
+  };
 };
 
 export default function Dashboard() {
