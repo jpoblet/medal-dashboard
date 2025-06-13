@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DashboardNavbar from "@/components/dashboard-navbar";
 import CreateCompetitionModal from "@/components/create-competition-modal";
 import EditCompetitionModal from "@/components/edit-competition-modal";
 import CompetitionCard from "@/components/competition-card";
-import { InfoIcon, Calendar, Filter } from "lucide-react";
+import { Calendar, Filter } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import DashboardFilters from "@/components/dashboard-filters";
-import { useEffect } from "react";
 
 type Competition = {
   id: string;
@@ -27,24 +26,23 @@ type Competition = {
 };
 
 export default function Dashboard() {
+  const supabase = createClient();
+
   const [user, setUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Filter states
   const [selectedSport, setSelectedSport] = useState<string>("all");
   const [selectedOrganizer, setSelectedOrganizer] = useState<string>("all");
   const [showOpenRegistrationOnly, setShowOpenRegistrationOnly] =
     useState(false);
 
   useEffect(() => {
-    let competitionsChannel: any;
+    let competitionsChannel: ReturnType<typeof supabase.channel>;
 
     const fetchData = async () => {
-      const supabase = createClient();
-
       const {
         data: { user: currentUser },
       } = await supabase.auth.getUser();
@@ -56,7 +54,6 @@ export default function Dashboard() {
 
       setUser(currentUser);
 
-      // Get user role
       const { data: profile } = await supabase
         .from("users")
         .select("role")
@@ -70,7 +67,6 @@ export default function Dashboard() {
 
       setUserProfile(profile);
 
-      // Fetch competitions with creator info
       const { data: competitionsData, error: competitionsError } =
         await supabase
           .from("competitions")
@@ -84,9 +80,7 @@ export default function Dashboard() {
         setCompetitions(competitionsData || []);
       }
 
-      setLoading(false);
-
-      // Set up real-time subscription for competitions
+      // Real-time sync
       competitionsChannel = supabase
         .channel("competitions-changes")
         .on(
@@ -97,10 +91,7 @@ export default function Dashboard() {
             table: "competitions",
             filter: `created_by=eq.${currentUser.id}`,
           },
-          async (payload) => {
-            console.log("Competition change detected:", payload);
-
-            // Refetch competitions data
+          async () => {
             const { data: updatedCompetitions, error: refetchError } =
               await supabase
                 .from("competitions")
@@ -111,44 +102,34 @@ export default function Dashboard() {
             if (!refetchError && updatedCompetitions) {
               setCompetitions(updatedCompetitions);
             }
-          },
+          }
         )
         .subscribe();
     };
 
-    fetchData();
+    fetchData().finally(() => setLoading(false));
 
-    // Cleanup subscription on unmount
     return () => {
       if (competitionsChannel) {
-        const supabase = createClient();
         supabase.removeChannel(competitionsChannel);
       }
     };
   }, []);
 
-  // Filter competitions based on selected criteria
   const filteredCompetitions = useMemo(() => {
     return competitions.filter((competition) => {
-      // Sport filter
-      if (selectedSport !== "all") {
-        if (competition.sport !== selectedSport) {
-          return false;
-        }
+      if (selectedSport !== "all" && competition.sport !== selectedSport) {
+        return false;
       }
-
-      // Organizer filter
-      if (selectedOrganizer !== "all") {
-        if (competition.creator?.full_name !== selectedOrganizer) {
-          return false;
-        }
+      if (
+        selectedOrganizer !== "all" &&
+        competition.creator?.full_name !== selectedOrganizer
+      ) {
+        return false;
       }
-
-      // Registration open filter
       if (showOpenRegistrationOnly && !competition.registration_open) {
         return false;
       }
-
       return true;
     });
   }, [
@@ -180,7 +161,6 @@ export default function Dashboard() {
       <DashboardNavbar />
       <main className="w-full">
         <div className="container mx-auto px-4 py-8 flex flex-col gap-8">
-          {/* Header Section */}
           <header className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-bold">My Competitions</h1>
@@ -191,7 +171,6 @@ export default function Dashboard() {
             </div>
           </header>
 
-          {/* Filters Section */}
           <DashboardFilters
             competitions={competitions}
             selectedSport={selectedSport}
@@ -202,7 +181,6 @@ export default function Dashboard() {
             setShowOpenRegistrationOnly={setShowOpenRegistrationOnly}
           />
 
-          {/* Competitions Section */}
           <section className="space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -240,16 +218,12 @@ export default function Dashboard() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {filteredCompetitions.map((competition) => (
                   <CompetitionCard
-  key={competition.id}
-  currentUserId={user.id}
-  competition={{
-    ...competition,
-    creator: { full_name: competition.creator_full_name ?? null },
-  }}
-  showManageButton={true}
-  showCreator={false}
-/>
-                  
+                    key={competition.id}
+                    currentUserId={user.id}
+                    competition={competition}
+                    showManageButton={true}
+                    showCreator={false}
+                  />
                 ))}
               </div>
             )}
