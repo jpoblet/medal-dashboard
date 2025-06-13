@@ -78,10 +78,16 @@ export default function CompetitionsPage() {
           .order("created_at", { ascending: false });
 
       if (competitionsError) {
-        setError(competitionsError.message);
-      } else {
-        setCompetitions(competitionsData || []);
-      }
+  setError(competitionsError.message);
+} else if (competitionsData) {
+  // Filter out invalid competitions missing id
+  const filteredCompetitions = competitionsData.filter(
+    (c): c is Competition => c.id !== null,
+  );
+  setCompetitions(filteredCompetitions);
+} else {
+  setCompetitions([]);
+}
 
       setLoading(false);
 
