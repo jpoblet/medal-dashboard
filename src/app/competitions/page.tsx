@@ -63,7 +63,9 @@ export default function CompetitionsPage() {
           .eq("user_id", currentUser.id);
 
         setUserJoinedCompetitions(
-          userParticipations?.map((p) => p.competition_id) || [],
+          userParticipations
+            ?.map((p) => p.competition_id)
+            .filter((id): id is string => id !== null) || [],
         );
       }
 
@@ -134,7 +136,9 @@ export default function CompetitionsPage() {
                 .eq("user_id", currentUser.id);
 
               setUserJoinedCompetitions(
-                updatedParticipations?.map((p) => p.competition_id) || [],
+                updatedParticipations
+                  ?.map((p) => p.competition_id)
+                  .filter((id): id is string => id !== null) || [],
               );
             },
           )
