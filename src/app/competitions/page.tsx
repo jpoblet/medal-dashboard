@@ -113,8 +113,11 @@ export default function CompetitionsPage() {
                 .order("created_at", { ascending: false });
 
             if (!refetchError && updatedCompetitions) {
-              setCompetitions(updatedCompetitions);
-            }
+  const filteredCompetitions = updatedCompetitions.filter(
+    (c): c is Competition => c.id !== null,
+  );
+  setCompetitions(filteredCompetitions);
+}
           },
         )
         .subscribe();
