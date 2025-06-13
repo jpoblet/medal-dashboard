@@ -8,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import type { RealtimeChannel } from "@supabase/supabase-js";
+
 
 type Competition = {
   id: string;
@@ -123,7 +125,7 @@ export default function CompetitionsPage() {
         .subscribe();
 
       // Set up real-time subscription for participation changes (if user is authenticated)
-      let participationsChannel;
+let participationsChannel: RealtimeChannel | undefined;
       if (currentUser) {
         participationsChannel = supabase
           .channel("participations-changes-public")
