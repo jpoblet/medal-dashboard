@@ -74,7 +74,7 @@ export default function Page() {
         setError(competitionsError.message);
       } else if (competitionsData) {
         const filteredCompetitions = competitionsData.filter(
-          (c): c is Competition => c.id !== null
+          (c): c is CompetitionLocal => c.id !== null
         );
         setCompetitions(filteredCompetitions);
       } else {
@@ -113,7 +113,7 @@ export default function Page() {
 
             if (!refetchError && updatedCompetitions) {
               const filtered = updatedCompetitions.filter(
-                (c): c is Competition => c.id !== null
+                (c): c is CompetitionLocal => c.id !== null
               );
               setCompetitions(filtered);
             }
