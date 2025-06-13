@@ -29,9 +29,7 @@ export default function Page() {
   const [user, setUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
-  const [userJoinedCompetitions, setUserJoinedCompetitions] = useState<
-    string[]
-  >([]);
+  const [userJoinedCompetitions, setUserJoinedCompetitions] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -64,23 +62,22 @@ export default function Page() {
       setUserProfile(profile);
 
       // Fetch competitions
-      const { data: competitionsData, error: competitionsError } =
-        await supabase
-          .from("competitions_with_creators")
-          .select("*")
-          .eq("is_visible", true)
-          .order("created_at", { ascending: false });
+      const { data: competitionsData, error: competitionsError } = await supabase
+        .from("competitions_with_creators")
+        .select("*")
+        .eq("is_visible", true)
+        .order("created_at", { ascending: false });
 
       if (competitionsError) {
-  setError(competitionsError.message);
-} else if (competitionsData) {
-  const filteredCompetitions = competitionsData.filter(
-    (c): c is Competition => c.id !== null
-  );
-  setCompetitions(filteredCompetitions);
-} else {
-  setCompetitions([]);
-}
+        setError(competitionsError.message);
+      } else if (competitionsData) {
+        const filteredCompetitions = competitionsData.filter(
+          (c): c is Competition => c.id !== null
+        );
+        setCompetitions(filteredCompetitions);
+      } else {
+        setCompetitions([]);
+      }
 
       // Fetch user's joined competitions
       const { data: userParticipations } = await supabase
@@ -88,9 +85,10 @@ export default function Page() {
         .select("competition_id")
         .eq("user_id", currentUser.id);
 
-      setUserJoinedCompetitions(
-        userParticipations?.map((p) => p.competition_id) || [],
-      );
+      const joinedCompetitionIds =
+        userParticipations?.map((p) => p.competition_id).filter((id): id is string => id !== null) || [];
+
+      setUserJoinedCompetitions(joinedCompetitionIds);
 
       setLoading(false);
 
@@ -105,17 +103,19 @@ export default function Page() {
             table: "competitions",
           },
           async () => {
-            const { data: updatedCompetitions, error: refetchError } =
-              await supabase
-                .from("competitions_with_creators")
-                .select("*")
-                .eq("is_visible", true)
-                .order("created_at", { ascending: false });
+            const { data: updatedCompetitions, error: refetchError } = await supabase
+              .from("competitions_with_creators")
+              .select("*")
+              .eq("is_visible", true)
+              .order("created_at", { ascending: false });
 
             if (!refetchError && updatedCompetitions) {
-              setCompetitions(updatedCompetitions);
+              const filtered = updatedCompetitions.filter(
+                (c): c is Competition => c.id !== null
+              );
+              setCompetitions(filtered);
             }
-          },
+          }
         )
         .subscribe();
 
@@ -136,10 +136,13 @@ export default function Page() {
               .select("competition_id")
               .eq("user_id", currentUser.id);
 
-            setUserJoinedCompetitions(
-              updatedParticipations?.map((p) => p.competition_id) || [],
-            );
-          },
+            const updatedIds =
+              updatedParticipations
+                ?.map((p) => p.competition_id)
+                .filter((id): id is string => id !== null) || [];
+
+            setUserJoinedCompetitions(updatedIds);
+          }
         )
         .subscribe();
 
