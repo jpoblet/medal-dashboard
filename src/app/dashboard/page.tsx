@@ -240,12 +240,16 @@ export default function Dashboard() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {filteredCompetitions.map((competition) => (
                   <CompetitionCard
-                    key={competition.id}
-                    currentUserId={user.id}
-                    competition={competition}
-                    showManageButton={true}
-                    showCreator={false}
-                  />
+  key={competition.id}
+  currentUserId={user.id}
+  competition={{
+    ...competition,
+    creator: { full_name: competition.creator_full_name ?? null },
+  }}
+  showManageButton={true}
+  showCreator={false}
+/>
+                  
                 ))}
               </div>
             )}
